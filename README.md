@@ -6,7 +6,7 @@ EcoBook Loop is a progressive web app for managing book donations, recycling, an
 
 ## Setup Summary
 
-- **Frontend:** Initialized with `create-react-app`, styled with Tailwind CSS.
+- **Frontend:** Initialized with `create-react-app`, styled with CSS.
 - **Backend:** Node.js/Express server with PostgreSQL. Authentication via JWT and bcrypt.
 
 ## Authentication
