@@ -15,4 +15,4 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   logging: false
 });
 
-Module.exports = sequelize;
+module.exports = sequelize;
