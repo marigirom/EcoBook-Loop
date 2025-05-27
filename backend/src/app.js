@@ -27,6 +27,13 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const sequelize = require('./config/db');
+const User = require('./models/User');
+
+//sync to database
+sequelize.sync().then(()=> {
+  console.log('Database synced');
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;

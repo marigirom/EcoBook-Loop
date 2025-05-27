@@ -22,7 +22,7 @@ export default function Login() {
       const res = await api.post('/auth/login', form);
       login(res.data.token);
       alert('Logged in successfully');
-      navigate('/dashboard'); // or wherever you'd like to redirect
+      navigate('/dashboard'); //  redirecting to dashboard
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }
