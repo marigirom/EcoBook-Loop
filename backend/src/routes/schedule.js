@@ -8,4 +8,4 @@ router.get('/', (req, res) => {
   res.send('Schedule route works!');
 });
 
-module.exports = router; // ✅ must export the router
+module.exports = router; 

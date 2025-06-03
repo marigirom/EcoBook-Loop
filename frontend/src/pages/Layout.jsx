@@ -1,145 +1,280 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Card, CardContent, Button, Avatar } from '../components/ui/ui';
+import { Card, CardContent, Button, Avatar } from '../components/ui/Ui';
+import { FaBell, FaUserCircle, FaDollarSign } from 'react-icons/fa';
+
+import ModalRenderer from '../components/ui/Modals';
+import '../app.css';
+
+const locations = ['Nairobi', 'Mombasa', 'Kisumu', 'Eldoret'];
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('donate');
+  const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
   const { logout } = useAuth();
 
-  const renderDonateReceive = () => (
-    <>
-      <h4 className="mt-4">Are you a donor?</h4>
-      <div className="row mt-3">
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>Donate Books</h5>
-              <p>Title, Condition, Location</p>
-              <Button>List Book</Button>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>List Recyclables</h5>
-              <p>Category, Count, Location</p>
-              <Button>List Materials</Button>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>View Requests</h5>
-              <p>Books & Recycle Material</p>
-              <Button>Pickup & Deliver</Button>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>Check Status</h5>
-              <p>Pending, Delivered, Tracking</p>
-              <Button>View Status</Button>
-            </div>
-          </div>
-        </div>
-      </div>
+   const toggleAvatarDropdown = () => setShowAvatarDropdown(!showAvatarDropdown);
+  const onNotificationsClick = () => alert('Open notifications panel');
+  const onBonusClick = () => alert('Show bonus info')
 
-      <h4 className="mt-5">Are you searching for a book?</h4>
-      <div className="row mt-3">
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>Search Book</h5>
-              <p>By Title & Location</p>
-              <Button>Search</Button>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>My Requested Books</h5>
-              <p>Track delivery</p>
-              <Button>View</Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
 
-  const renderRecycle = () => (
-    <>
-      <h4 className="mt-4">Are you looking for recyclable materials?</h4>
-      <div className="row mt-3">
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>Search for Materials</h5>
-              <p>By location</p>
-              <Button>Search Materials</Button>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6 mb-3">
-          <div className="card">
-            <div className="card-body">
-              <h5>Delivery Status</h5>
-              <p>Track, Confirm, Bonus</p>
-              <Button>Track Delivery</Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  const [listedBooks, setListedBooks] = useState([]);
+  const [listedItems, setListedItems] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [statusList,] = useState([]);
+  const [requestedBooks, setRequestedBooks] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [materialsSearchResults, setMaterialsSearchResults] = useState([]);
+  const [selectedMaterials, setSelectedMaterials] = useState([]);
+
+  const [bookForm, setBookForm] = useState({ title: '', condition: 'new', location: locations[0] });
+  const [itemForm, setItemForm] = useState({ category: 'Magazine', copies: '', location: locations[0] });
+  const [searchForm, setSearchForm] = useState({ title: '', location: locations[0] });
+  const [materialSearchForm, setMaterialSearchForm] = useState({ location: locations[0] });
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalContent(null);
+  };
+
+  const handleModal = (type) => {
+    setModalContent(type);
+    setShowModal(true);
+  };
+
+  const submitListBook = (e) => {
+    e.preventDefault();
+    setListedBooks([...listedBooks, { ...bookForm, id: Date.now() }]);
+    alert('List updated');
+    closeModal();
+  };
+
+  const submitListItem = (e) => {
+    e.preventDefault();
+    setListedItems([...listedItems, { ...itemForm, id: Date.now() }]);
+    alert('Updated successfully');
+    closeModal();
+  };
+
+  const submitSearchBook = (e) => {
+    e.preventDefault();
+    const filtered = listedBooks.filter(
+      (b) =>
+        b.location === searchForm.location &&
+        b.title.toLowerCase().includes(searchForm.title.toLowerCase())
+    );
+    setSearchResults(filtered);
+  };
+
+  const submitSearchMaterials = (e) => {
+    e.preventDefault();
+    const filtered = listedItems.filter(i => i.location === materialSearchForm.location);
+    setMaterialsSearchResults(filtered);
+  };
+
+  const submitRequestBook = (book) => {
+    setRequests([...requests, {
+      id: Date.now(),
+      type: 'book',
+      title: book.title,
+      requestedBy: `You - ${book.location}`,
+      status: 'Pending',
+    }]);
+    alert(`Requested "${book.title}"`);
+  };
+
+  const submitDeliverRequest = (reqId) => {
+    setRequests(requests.map((r) =>
+      r.id === reqId ? { ...r, status: 'Initiated delivery' } : r
+    ));
+    alert('Recipient notified. Delivery initiated.');
+  };
+
+  const submitMarkReceived = (bookId) => {
+    setRequestedBooks(requestedBooks.map((b) =>
+      b.id === bookId ? { ...b, status: 'Delivered' } : b
+    ));
+    alert('Marked as received.');
+  };
+
+  const toggleSelectMaterial = (id) => {
+    setSelectedMaterials(
+      selectedMaterials.includes(id)
+        ? selectedMaterials.filter((mid) => mid !== id)
+        : [...selectedMaterials, id]
+    );
+  };
+
+  const submitRequestMaterials = () => {
+    if (selectedMaterials.length === 0) {
+      alert('Please select materials');
+      return;
+    }
+    alert(`Requested materials with IDs: ${selectedMaterials.join(', ')}`);
+    closeModal();
+  };
 
   return (
-    <div className="container py-4">
-      {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm rounded mb-4">
-        <div className="container-fluid">
-          <span className="navbar-brand text-success fw-bold">EcoBook</span>
+    <div className="layout-wrapper">
 
-          <div className="d-flex align-items-center gap-3">
-            <button
-              className={`btn btn-sm ${activeTab === 'donate' ? 'btn-success text-white' : 'btn-outline-secondary'}`}
-              onClick={() => setActiveTab('donate')}
-            >
-              Donate/Receive
-            </button>
-            <button
-              className={`btn btn-sm ${activeTab === 'recycle' ? 'btn-success text-white' : 'btn-outline-secondary'}`}
-              onClick={() => setActiveTab('recycle')}
-            >
-              Find to Recycle
-            </button>
+   {/* Navbar */}
+<nav className="custom-navbar">
+  {/* LEFT: logo + tabs */}
+  <div className="nav-left">
+    <span className="logo">EcoBook</span>
 
-            <div className="dropdown ms-3">
-              <Avatar
-                className="dropdown-toggle cursor-pointer"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
+    <div className="nav-tabs">
+      <Button
+        variant={activeTab === 'donate' ? 'primary' : 'outline'}
+        onClick={() => setActiveTab('donate')}
+      >
+        Donate/Receive
+      </Button>
+      <Button
+        variant={activeTab === 'recycle' ? 'primary' : 'outline'}
+        onClick={() => setActiveTab('recycle')}
+      >
+        Find Recyclables
+      </Button>
+    </div>
+  </div>
+
+  {/* RIGHT: icons + avatar + logout */}
+  <div className="nav-right">
+    <button className="icon-button" onClick={onNotificationsClick} aria-label="Notifications">
+      <FaBell />
+    </button>
+
+    <button className="icon-button" onClick={onBonusClick} aria-label="Bonus">
+      <FaDollarSign />
+    </button>
+
+    <div className="avatar-container">
+      <button className="icon-button avatar-button" onClick={toggleAvatarDropdown} aria-label="User menu">
+        <FaUserCircle />
+      </button>
+
+      {showAvatarDropdown && (
+        <div className="avatar-dropdown">
+          <p>User Profile</p>
+          <p>Settings</p>
+          <p onClick={logout} style={{ cursor: 'pointer' }}>Logout</p>
+        </div>
+      )}
+    </div>
+
+    <Button variant="outline" onClick={logout}>Logout</Button>
+  </div>
+</nav>
+
+
+  {/* Donor Section */}
+  {activeTab === 'donate' && (
+    <>
+      <h4 className="section-title">Are you donating?</h4>
+      <div className="grid-container">
+        <Card>
+          <h5>Donate Books</h5>
+          <Button onClick={() => handleModal('listBook')}>List Book</Button>
+          <Button variant="outline" onClick={() => handleModal('viewListed')}>View Listed</Button>
+        </Card>
+
+        <Card>
+          <h5>List Recyclables</h5>
+          <Button onClick={() => handleModal('listItem')}>List Item</Button>
+        </Card>
+
+        <Card>
+          <h5>View Requests</h5>
+          <Button onClick={() => handleModal('viewRequests')}>View Requests</Button>
+        </Card>
+
+        <Card>
+          <h5>Check Status</h5>
+          <Button onClick={() => handleModal('viewStatus')}>View Status</Button>
+        </Card>
+      </div>
+
+      <h4 className="section-title">Searching for a book?</h4>
+      <div className="grid-container">
+        <Card>
+          <h5>Search Book</h5>
+          <Button onClick={() => handleModal('searchBook')}>Search</Button>
+        </Card>
+
+        <Card>
+          <h5>My Requested Books</h5>
+          <Button onClick={() => handleModal('myRequestedBooks')}>View</Button>
+        </Card>
+      </div>
+    </>
+  )}
+
+  {/* Recyclables Section */}
+  {activeTab === 'recycle' && (
+    <>
+      <h4 className="section-title">Find materials to recycle</h4>
+      <div className="grid-container">
+        <Card>
+          <h5>Search Materials</h5>
+          <Button onClick={() => handleModal('searchMaterials')}>Search Materials</Button>
+        </Card>
+        <Card>
+          <h5>My Requested</h5>
+          <Button onClick={() => handleModal('searchMaterials')}>View requests</Button>
+        </Card>
+      </div>
+    </>
+  )}
+
+
+      {showModal && (
+        <div className="modal show d-block" tabIndex="-1" onClick={closeModal}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content p-4">
+              <ModalRenderer
+                modalType={modalContent}
+                closeModal={closeModal}
+                locations={locations}
+                listedBooks={listedBooks}
+                listedItems={listedItems}
+                requests={requests}
+                statusList={statusList}
+                requestedBooks={requestedBooks}
+                searchResults={searchResults}
+                materialsSearchResults={materialsSearchResults}
+                selectedMaterials={selectedMaterials}
+                formState={
+                  modalContent === 'listBook' ? bookForm :
+                  modalContent === 'listItem' ? itemForm :
+                  modalContent === 'searchBook' ? searchForm :
+                  materialSearchForm
+                }
+                setFormState={
+                  modalContent === 'listBook' ? setBookForm :
+                  modalContent === 'listItem' ? setItemForm :
+                  modalContent === 'searchBook' ? setSearchForm :
+                  setMaterialSearchForm
+                }
+                onSubmit={
+                  modalContent === 'listBook' ? submitListBook :
+                  modalContent === 'listItem' ? submitListItem :
+                  modalContent === 'searchBook' ? submitSearchBook :
+                  submitSearchMaterials
+                }
+                onRequestBook={submitRequestBook}
+                onDeliverRequest={submitDeliverRequest}
+                onMarkReceived={submitMarkReceived}
+                onToggleMaterial={toggleSelectMaterial}
+                onRequestMaterials={submitRequestMaterials}
               />
-              <ul className="dropdown-menu dropdown-menu-end">
-                <li><span className="dropdown-item">My Profile</span></li>
-                <li><span className="dropdown-item">My Bonuses</span></li>
-                <li><span className="dropdown-item">Donated Items</span></li>
-                <li><span className="dropdown-item">Received Items</span></li>
-              </ul>
             </div>
-
-            <button className="btn btn-outline-danger btn-sm" onClick={logout}>Logout</button>
           </div>
         </div>
-      </nav>
-
-      {/* Content */}
-      {activeTab === 'donate' ? renderDonateReceive() : renderRecycle()}
+      )}
     </div>
   );
 };

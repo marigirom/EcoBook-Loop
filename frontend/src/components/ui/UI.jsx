@@ -1,75 +1,86 @@
-import { useState } from 'react';
-import React from 'react';
+import React, { useState } from 'react';
 import classNames from 'classnames';
 import clsx from 'clsx';
 
-//Avatar
+//
+// ✅ Avatar
+//
 export function Avatar({ children }) {
-    return (
-        <div className='w-10 h-10 rounded-full overflow-hidden border-2 border-green-500 shadow-sm'>
-            {children}
-        </div>
-    )
+  return (
+    <div className="avatar">
+      {children}
+    </div>
+  );
 }
 
-//button
-export function Button({ children, className = "", ...props }) {
+//
+// ✅ Button
+//
+export function Button({ children, variant = 'primary', className = '', ...props }) {
+  const base = 'custom-btn';
+  const variantClass = {
+    primary: 'btn-primary-custom',
+    outline: 'btn-outline-custom',
+    dark: 'btn-dark-custom',
+  }[variant] || 'btn-primary-custom';
+
   return (
-    <button
-      className={`bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ${className}`}
-      {...props}
-    >
+    <button className={`${base} ${variantClass} ${className}`} {...props}>
       {children}
     </button>
   );
 }
 
-//Card
-export function Card({ className, children }) {
+//
+// ✅ Card
+//
+export const Card = ({ children, className = '' }) => (
+  <div className={`custom-card ${className}`}>
+    <div className="custom-card-body">{children}</div>
+  </div>
+);
+
+//
+// ✅ CardContent
+//
+export function CardContent({ className = '', children }) {
   return (
-    <div
-      className={classNames(
-        "rounded-xl border bg-white p-4 shadow-sm",
+    <div className={classNames('mt-2 text-sm text-gray-700', className)}>
+      {children}
+    </div>
+  );
+}
+
+//
+// ✅ Input
+//
+export function Input({ placeholder, className = '', ...props }) {
+  return (
+    <input
+      type="text"
+      placeholder={placeholder}
+      className={clsx(
+        'w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition',
         className
       )}
-    >
-      {children}
-    </div>
+      {...props}
+    />
   );
 }
 
-export function CardContent({ className, children }) {
-  return (
-    <div className={classNames("mt-2 text-sm text-gray-700", className)}>
-      {children}
-    </div>
-  );
-}
-
-//input
-
-export function Input({ placeholder, className, ...props}) {
-    return (
-        <input
-          type ="text"
-          placeholder={placeholder}
-          className={clsx("w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition",
-        className)}
-        {...props}
-        />
-    )
-}
-
-//Tabs
+//
+// ✅ Tabs (for switching views)
+//
 export function Tabs({ defaultvalue, children }) {
-    const [active, setActive] = useState(defaultvalue);
-    const tabChildren = React.children.map(children, (child) =>
-    React.cloneElement(child, { active, setActive})
-);
-return (
-    <div className='w-full'>{tabChildren}</div>
-);
+  const [active, setActive] = useState(defaultvalue);
+
+  const tabChildren = React.Children.map(children, (child) =>
+    React.cloneElement(child, { active, setActive })
+  );
+
+  return <div className="w-full">{tabChildren}</div>;
 }
+
 export function TabsList({ children }) {
   return (
     <div className="flex space-x-2 bg-green-100 p-2 rounded-lg">
@@ -80,13 +91,14 @@ export function TabsList({ children }) {
 
 export function TabsTrigger({ value, active, setActive, children }) {
   const isActive = active === value;
+
   return (
     <button
       onClick={() => setActive(value)}
       className={`px-4 py-2 rounded-lg font-medium transition ${
         isActive
-          ? "bg-green-600 text-white shadow"
-          : "bg-white text-green-700 hover:bg-green-200"
+          ? 'bg-green-600 text-white shadow'
+          : 'bg-white text-green-700 hover:bg-green-200'
       }`}
     >
       {children}

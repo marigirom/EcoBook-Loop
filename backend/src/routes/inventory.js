@@ -6,4 +6,4 @@ router.get('/', (req, res) => {
   res.send('Inventory route works!');
 });
 
-module.exports = router; // ✅ must be exported
+module.exports = router; 
