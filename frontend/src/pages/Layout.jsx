@@ -122,7 +122,7 @@ const Layout = () => {
 
    {/* Navbar */}
 <nav className="custom-navbar">
-  {/* LEFT: logo + tabs */}
+  {/* LEFT:navbar */}
   <div className="nav-left">
     <span className="logo">EcoBook</span>
 
@@ -142,7 +142,7 @@ const Layout = () => {
     </div>
   </div>
 
-  {/* RIGHT: icons + avatar + logout */}
+  {/* RIGHT: navbar */}
   <div className="nav-right">
     <button className="icon-button" onClick={onNotificationsClick} aria-label="Notifications">
       <FaBell />
