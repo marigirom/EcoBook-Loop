@@ -29,6 +29,7 @@ const cors = require('cors');
 require('dotenv').config();
 const sequelize = require('./config/db');
 const User = require('./models/User');
+const Material = require('./models/Material');
 
 //sync to database
 sequelize.sync().then(()=> {

@@ -1,7 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 //const pool = require('../config/db');
-const User = require('../models/User');
+
+const { User, Material } = require('../models');
 
 
 exports.register = async (req, res) => {
@@ -48,4 +49,34 @@ exports.login = async ( req, res) => {
     res.status(500).json({ message: 'Server error during login' });
    }
 };
-  
+
+//Listin materials
+
+exports.createMaterial = async (req, res) => {
+  const userId = req.user.userId; // This requires JWT middleware to set req.user
+  const { type, title, condition, category, location } = req.body;
+
+  try {
+    // Basic validation
+    if (!['book', 'recyclable'].includes(type)) {
+      return res.status(400).json({ message: 'Invalid material type. Must be book or recyclable.' });
+    }
+
+    const newMaterial = await Material.create({
+      userId,
+      type,
+      title: type === 'book' ? title : null,
+      condition: type === 'book' ? condition : null,
+      category: type === 'recyclable' ? category : null,
+      location
+    });
+
+    res.status(201).json({
+      message: 'Material listed successfully',
+      material: newMaterial
+    });
+  } catch (error) {
+    console.error('Material listing error:', error);
+    res.status(500).json({ message: 'Server error while listing material' });
+  }
+};
