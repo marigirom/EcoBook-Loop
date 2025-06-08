@@ -52,14 +52,27 @@ exports.login = async ( req, res) => {
 
 //Listin materials
 
-exports.createMaterial = async (req, res) => {
-  const userId = req.user.userId; // This requires JWT middleware to set req.user
-  const { type, title, condition, category, location } = req.body;
+//const { Material } = require('../models');
 
+exports.createMaterial = async (req, res) => {
   try {
-    // Basic validation
+    console.log('req.user: ', req.user);
+    const userId = req.user.userId;
+    //const userId = req.user.id;  // ✅ This matches your JWT structure
+    const { type, title, condition, category, location } = req.body;
+
     if (!['book', 'recyclable'].includes(type)) {
       return res.status(400).json({ message: 'Invalid material type. Must be book or recyclable.' });
+    }
+
+    if (type === 'book' && (!title || !condition)) {
+      return res.status(400).json({ message: 'Title and condition are required for books' });
+    }
+    if (type === 'recyclable' && !category) {
+      return res.status(400).json({ message: 'Category is required for recyclables' });
+    }
+    if (!location) {
+      return res.status(400).json({ message: 'Location is required' });
     }
 
     const newMaterial = await Material.create({
@@ -68,15 +81,36 @@ exports.createMaterial = async (req, res) => {
       title: type === 'book' ? title : null,
       condition: type === 'book' ? condition : null,
       category: type === 'recyclable' ? category : null,
-      location
+      location,
     });
 
     res.status(201).json({
       message: 'Material listed successfully',
-      material: newMaterial
+      material: newMaterial,
     });
   } catch (error) {
     console.error('Material listing error:', error);
     res.status(500).json({ message: 'Server error while listing material' });
+  }
+};
+
+//const { Material, User } = require('../models');
+
+exports.getMaterials = async (req, res) => {
+  try {
+    const  userId = req.user.userId;
+
+    const materials = await Material.findAll({
+      where: { userId },
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email']
+      }]
+    });
+
+    res.status(200).json({ materials });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error fetching materials' });
   }
 };

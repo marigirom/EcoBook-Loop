@@ -9,4 +9,6 @@ router.post('/materials', auth, authController.createMaterial);
 router.post('/register', register);
 router.post('/login', login);
 
+router.get('/materials', auth,authController.getMaterials);
+
 module.exports = router;

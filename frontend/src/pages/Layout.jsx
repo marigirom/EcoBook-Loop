@@ -1,8 +1,14 @@
 
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState,useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent, Button, Avatar } from '../components/ui/Ui';
 import { FaBell, FaUserCircle, FaDollarSign } from 'react-icons/fa';
+
+//const { token } = useAuth();
+
+import axios from 'axios';
+import { useEffect } from 'react';
+//import api from '../services/api'; // Adjust the path as needed
 
 import ModalRenderer from '../components/ui/Modals';
 import '../app.css';
@@ -10,6 +16,7 @@ import '../app.css';
 const locations = ['Nairobi', 'Mombasa', 'Kisumu', 'Eldoret'];
 
 const Layout = () => {
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('donate');
   const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
   const { logout } = useAuth();
@@ -21,8 +28,7 @@ const Layout = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState(null);
 
-  const [listedBooks, setListedBooks] = useState([]);
-  const [listedItems, setListedItems] = useState([]);
+
   const [requests, setRequests] = useState([]);
   const [statusList,] = useState([]);
   const [requestedBooks, setRequestedBooks] = useState([]);
@@ -30,7 +36,11 @@ const Layout = () => {
   const [materialsSearchResults, setMaterialsSearchResults] = useState([]);
   const [selectedMaterials, setSelectedMaterials] = useState([]);
 
-  const [bookForm, setBookForm] = useState({ title: '', condition: 'new', location: locations[0] });
+  const [bookForm, setBookForm] = useState({ type: 'book', title: '', condition: 'new', location: locations[0] });
+  console.log('sending:', {
+    ...bookForm,
+    type: 'book'
+  });
   const [itemForm, setItemForm] = useState({ category: 'Magazine', copies: '', location: locations[0] });
   const [searchForm, setSearchForm] = useState({ title: '', location: locations[0] });
   const [materialSearchForm, setMaterialSearchForm] = useState({ location: locations[0] });
@@ -45,20 +55,76 @@ const Layout = () => {
     setShowModal(true);
   };
 
-  const submitListBook = (e) => {
-    e.preventDefault();
-    setListedBooks([...listedBooks, { ...bookForm, id: Date.now() }]);
-    alert('List updated');
-    closeModal();
-  };
+ //***BOOK AND ITEM LISTING***//
+  const [listedBooks, setListedBooks] = useState([]);
+const [listedItems, setListedItems] = useState([]);
 
-  const submitListItem = (e) => {
-    e.preventDefault();
-    setListedItems([...listedItems, { ...itemForm, id: Date.now() }]);
-    alert('Updated successfully');
-    closeModal();
-  };
+//FetchBooks$Items**
 
+const fetchListedMaterials = useCallback(async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/inventory/materials', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const all = res.data.materials;
+    setListedBooks(all.filter(item => item.type === 'book'));
+    setListedItems(all.filter(item => item.type !== 'book'));
+  } catch (err) {
+    console.error('Failed to fetch materials:', err);
+  }
+}, [token]);
+useEffect(() => {
+  
+  fetchListedMaterials();
+}, [fetchListedMaterials]);
+
+
+//BOOKS*
+const submitListBook = async (e) => {
+  e.preventDefault();
+  try {
+    //await api.post('/inventory/materials', {
+    await axios.post('http://localhost:5000/inventory/materials', {
+      ...bookForm,
+      type: 'book',
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    await fetchListedMaterials(); // refresh
+    alert('Book listed successfully');
+    closeModal();
+  } catch (err) {
+    console.error('Error listing book:', err);
+    alert('Failed to list book');
+  }
+};
+//ITEMS*
+const submitListItem = async (e) => {
+  e.preventDefault();
+  try {
+    //await api.post('/inventory/materials', {
+    await axios.post('http://localhost:5000/inventory/materials', {
+      ...itemForm,
+      type: 'recyclable',
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    await fetchListedMaterials(); // refresh
+    alert('Recyclable item listed successfully');
+    closeModal();
+  } catch (err) {
+    console.error('Error listing item:', err);
+    alert('Failed to list item');
+  }
+};
+
+//search BOOK**
   const submitSearchBook = (e) => {
     e.preventDefault();
     const filtered = listedBooks.filter(
@@ -68,7 +134,7 @@ const Layout = () => {
     );
     setSearchResults(filtered);
   };
-
+//search ITEM** & requests**
   const submitSearchMaterials = (e) => {
     e.preventDefault();
     const filtered = listedItems.filter(i => i.location === materialSearchForm.location);
@@ -85,7 +151,7 @@ const Layout = () => {
     }]);
     alert(`Requested "${book.title}"`);
   };
-
+//Deliver to recipient**
   const submitDeliverRequest = (reqId) => {
     setRequests(requests.map((r) =>
       r.id === reqId ? { ...r, status: 'Initiated delivery' } : r
@@ -107,7 +173,7 @@ const Layout = () => {
         : [...selectedMaterials, id]
     );
   };
-
+//Request materials to recycle**
   const submitRequestMaterials = () => {
     if (selectedMaterials.length === 0) {
       alert('Please select materials');

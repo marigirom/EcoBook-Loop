@@ -3,8 +3,8 @@ import classNames from 'classnames';
 import clsx from 'clsx';
 
 //
-// ✅ Avatar
-//
+//  Avatar
+
 export function Avatar({ children }) {
   return (
     <div className="avatar">
@@ -14,8 +14,8 @@ export function Avatar({ children }) {
 }
 
 //
-// ✅ Button
-//
+//  Button
+
 export function Button({ children, variant = 'primary', className = '', ...props }) {
   const base = 'custom-btn';
   const variantClass = {
@@ -32,8 +32,8 @@ export function Button({ children, variant = 'primary', className = '', ...props
 }
 
 //
-// ✅ Card
-//
+// Card
+
 export const Card = ({ children, className = '' }) => (
   <div className={`custom-card ${className}`}>
     <div className="custom-card-body">{children}</div>
@@ -41,8 +41,8 @@ export const Card = ({ children, className = '' }) => (
 );
 
 //
-// ✅ CardContent
-//
+// CardContent
+
 export function CardContent({ className = '', children }) {
   return (
     <div className={classNames('mt-2 text-sm text-gray-700', className)}>
@@ -52,8 +52,7 @@ export function CardContent({ className = '', children }) {
 }
 
 //
-// ✅ Input
-//
+// Input
 export function Input({ placeholder, className = '', ...props }) {
   return (
     <input
@@ -69,8 +68,7 @@ export function Input({ placeholder, className = '', ...props }) {
 }
 
 //
-// ✅ Tabs (for switching views)
-//
+// Tabs (for switching views)
 export function Tabs({ defaultvalue, children }) {
   const [active, setActive] = useState(defaultvalue);
 

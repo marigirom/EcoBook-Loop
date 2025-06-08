@@ -20,13 +20,15 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
-  const authHeader = req.headers.authrization;
-  if (!authHeader || ! authHeader.startsWith('Bearer')) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer')) {
     return res.status(401).json({ message: 'Missing Token' });
   }
 
-  const token = authHeader.split('')[i];
+  //const token = authHeader.split('')[i];
+const token = req.headers.authorization?.split(' ')[1];
 
+  
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
