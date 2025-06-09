@@ -8,7 +8,7 @@ const ModalRenderer = ({
   listedBooks,
   //listedItems,
   requests,
-  statusList,
+  //statusList,
   requestedBooks,
   searchResults,
   materialsSearchResults,
@@ -143,29 +143,44 @@ const ModalRenderer = ({
         </>
       );
 
-    case 'viewStatus':
-      return (
-        <>
-          <h5>Delivery Status</h5>
-          {statusList.length === 0 ? (
-            <p>No statuses available.</p>
-          ) : (
-            <ul>
-              {statusList.map((s) => (
-                <li key={s.id}>
-                  {s.title} - {s.status}
-                  {s.status === 'Pending Delivery' && (
-                    <a href="#" onClick={(e) => e.preventDefault()} style={{ marginLeft: 8 }}>
-                      View current location
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <Button onClick={closeModal}>Close</Button>
-        </>
-      );
+    // Inside your existing Modals component switch/case or conditional rendering:
+
+case 'viewStatus':
+  return (
+    <>
+      <h5>Delivery Status</h5>
+      {listedBooks.length === 0 ? (
+        <p>No books listed yet.</p>
+      ) : (
+        <ul>
+          {listedBooks.map((book) => (
+            <li key={book.id}>
+              <strong>{book.title}</strong> - {book.condition} - {book.location} <br />
+              <em>
+                Status: {book.status || 'Not requested yet'}
+              </em>
+              {book.status === 'Pending Delivery' && (
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert(`Tracking current location for "${book.title}"...`);
+                  }}
+                  style={{ marginLeft: 8 }}
+                >
+                  View current location
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button onClick={closeModal}>Close</Button>
+    </>
+  );
+
+
+
 
     case 'searchBook':
       return (

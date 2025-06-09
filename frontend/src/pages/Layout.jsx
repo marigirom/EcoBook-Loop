@@ -30,7 +30,7 @@ const Layout = () => {
 
 
   const [requests, setRequests] = useState([]);
-  const [statusList,] = useState([]);
+  //const [statusList,] = useState([]);
   const [requestedBooks, setRequestedBooks] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [materialsSearchResults, setMaterialsSearchResults] = useState([]);
@@ -81,7 +81,7 @@ useEffect(() => {
 }, [fetchListedMaterials]);
 
 
-//BOOKS*
+//Listing BOOKS*
 const submitListBook = async (e) => {
   e.preventDefault();
   try {
@@ -102,7 +102,7 @@ const submitListBook = async (e) => {
     alert('Failed to list book');
   }
 };
-//ITEMS*
+//Listing ITEMS*
 const submitListItem = async (e) => {
   e.preventDefault();
   try {
@@ -123,7 +123,16 @@ const submitListItem = async (e) => {
     alert('Failed to list item');
   }
 };
+//to view the status
+const booksWithStatus = listedBooks.map(book => {
+  const matchingRequest = requests.find(r => r.title === book.title);
+  return {
+    ...book,
+    status: matchingRequest?.status || 'Not requested yet',
+  };
+});
 
+//Recipients' section
 //search BOOK**
   const submitSearchBook = (e) => {
     e.preventDefault();
@@ -134,38 +143,70 @@ const submitListItem = async (e) => {
     );
     setSearchResults(filtered);
   };
+//request Book*
+  const submitRequestBook = (book) => {
+    //setRequests([...requests, {
+    const newRequest = {
+      id: Date.now(),
+      type: 'book',
+      title: book.title,
+      requestedBy: `You - ${book.location}`,
+      status: 'Pending',
+    };
+
+    setRequests(prev => [...prev, newRequest]);
+
+    setRequestedBooks(prev => [...prev, {
+      id: newRequest.id,
+      title: book.title,
+      status: 'Pending',
+    }]);
+    alert(`Requested "${book.title}"`);
+  };
+//donor initiates delivery
+//Deliver to recipient**
+      //const submitDeliverRequest = (reqId) => {
+        //setRequests(requests.map((r) =>
+          //r.id === reqId ? { ...r, status: 'Initiated delivery' } : r
+        //));
+        //alert('Recipient notified. Delivery initiated.');
+      //};
+  const submitDeliverRequest = (reqId) => {
+    //donor's**
+    setRequests(prev => 
+      prev.map((r) =>
+      r.id ===reqId ? { ...r, status: 'Delivery Initiated' } : r
+      )
+    );
+    //recipient's
+    setRequestedBooks(prev =>
+      prev.map((b) => 
+      b.id === reqId ? { ...b, status: 'Delivery Initiated'} : b
+      )
+    );
+    alert('Recipient notified, Delivery is initiated');
+  };
+//missing the recipients' requests
+
+//once the book is received
+  const submitMarkReceived = (bookId) => {
+    setRequestedBooks(requestedBooks.map((b) =>
+      b.id === bookId ? { ...b, status: 'Delivered' } : b
+    ));
+    setRequests(requests.map((r) =>
+    r.id === bookId ? { ...r, status: 'Delivered'} : r
+    ));
+    alert('Marked as received.');
+  };
+
+//search material
 //search ITEM** & requests**
   const submitSearchMaterials = (e) => {
     e.preventDefault();
     const filtered = listedItems.filter(i => i.location === materialSearchForm.location);
     setMaterialsSearchResults(filtered);
   };
-
-  const submitRequestBook = (book) => {
-    setRequests([...requests, {
-      id: Date.now(),
-      type: 'book',
-      title: book.title,
-      requestedBy: `You - ${book.location}`,
-      status: 'Pending',
-    }]);
-    alert(`Requested "${book.title}"`);
-  };
-//Deliver to recipient**
-  const submitDeliverRequest = (reqId) => {
-    setRequests(requests.map((r) =>
-      r.id === reqId ? { ...r, status: 'Initiated delivery' } : r
-    ));
-    alert('Recipient notified. Delivery initiated.');
-  };
-
-  const submitMarkReceived = (bookId) => {
-    setRequestedBooks(requestedBooks.map((b) =>
-      b.id === bookId ? { ...b, status: 'Delivered' } : b
-    ));
-    alert('Marked as received.');
-  };
-
+//select material to recycle
   const toggleSelectMaterial = (id) => {
     setSelectedMaterials(
       selectedMaterials.includes(id)
@@ -173,7 +214,7 @@ const submitListItem = async (e) => {
         : [...selectedMaterials, id]
     );
   };
-//Request materials to recycle**
+//submit materials to recycle**
   const submitRequestMaterials = () => {
     if (selectedMaterials.length === 0) {
       alert('Please select materials');
@@ -305,10 +346,11 @@ const submitListItem = async (e) => {
                 modalType={modalContent}
                 closeModal={closeModal}
                 locations={locations}
-                listedBooks={listedBooks}
+                //listedBooks={listedBooks}
                 listedItems={listedItems}
                 requests={requests}
-                statusList={statusList}
+                //statusList={statusList}
+                listedBooks={booksWithStatus}
                 requestedBooks={requestedBooks}
                 searchResults={searchResults}
                 materialsSearchResults={materialsSearchResults}
