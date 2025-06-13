@@ -6,13 +6,12 @@ const ModalRenderer = ({
   closeModal,
   locations,
   listedBooks,
-  //listedItems,
   requests,
-  //statusList,
   requestedBooks,
   searchResults,
   materialsSearchResults,
   selectedMaterials,
+  requestedMaterials,
   formState,
   setFormState,
   onSubmit,
@@ -20,7 +19,8 @@ const ModalRenderer = ({
   onDeliverRequest,
   onMarkReceived,
   onToggleMaterial,
-  onRequestMaterials
+  onRequestMaterials,
+  onMarkMaterialReceived
 }) => {
   switch (modalType) {
     case 'listBook':
@@ -143,44 +143,37 @@ const ModalRenderer = ({
         </>
       );
 
-    // Inside your existing Modals component switch/case or conditional rendering:
-
-case 'viewStatus':
-  return (
-    <>
-      <h5>Delivery Status</h5>
-      {listedBooks.length === 0 ? (
-        <p>No books listed yet.</p>
-      ) : (
-        <ul>
-          {listedBooks.map((book) => (
-            <li key={book.id}>
-              <strong>{book.title}</strong> - {book.condition} - {book.location} <br />
-              <em>
-                Status: {book.status || 'Not requested yet'}
-              </em>
-              {book.status === 'Pending Delivery' && (
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert(`Tracking current location for "${book.title}"...`);
-                  }}
-                  style={{ marginLeft: 8 }}
-                >
-                  View current location
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      <Button onClick={closeModal}>Close</Button>
-    </>
-  );
-
-
-
+    case 'viewStatus':
+      return (
+        <>
+          <h5>Delivery Status</h5>
+          {listedBooks.length === 0 ? (
+            <p>No books listed yet.</p>
+          ) : (
+            <ul>
+              {listedBooks.map((book) => (
+                <li key={book.id}>
+                  <strong>{book.title}</strong> - {book.condition} - {book.location} <br />
+                  <em>Status: {book.status || 'Not requested yet'}</em>
+                  {book.status === 'Pending Delivery' && (
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        alert(`Tracking current location for "${book.title}"...`);
+                      }}
+                      style={{ marginLeft: 8 }}
+                    >
+                      View current location
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button onClick={closeModal}>Close</Button>
+        </>
+      );
 
     case 'searchBook':
       return (
@@ -236,11 +229,7 @@ case 'viewStatus':
                 <li key={book.id}>
                   {book.title} - Status: {book.status}
                   {book.status === 'Delivery Initiated' && (
-                    <Button
-                      size="sm"
-                      style={{ marginLeft: 8 }}
-                      onClick={() => onMarkReceived(book.id)}
-                    >
+                    <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onMarkReceived(book.id)}>
                       Mark as Received
                     </Button>
                   )}
@@ -292,6 +281,40 @@ case 'viewStatus':
               <Button onClick={onRequestMaterials}>Request Selected</Button>
             </>
           )}
+        </>
+      );
+
+    case 'viewMillRequests':
+      return (
+        <>
+          <h5>Requested Materials (Paper Mill)</h5>
+          {(requestedMaterials?.length ?? 0) === 0 ? (
+            <p>No requests made to donors yet.</p>
+          ) : (
+            <ul>
+              {requestedMaterials.map((item) => (
+                <li key={item.id}>
+                  <b>{item.category}</b> ({item.copies} copies) - {item.location} <br />
+                  <em>Status: {item.status}</em>
+                  <div style={{ marginTop: 8 }}>
+                    {item.status === 'pending' && (
+                      <Button size="sm" onClick={() => alert(`Pickup scheduled for ${item.category} at ${item.location}`)}>
+                        Schedule Pickup
+                      </Button>
+                    )}
+                    {item.status === 'in_transit' && (
+                      <Button size="sm" onClick={() => onMarkMaterialReceived(item.id)}>
+                        Mark as Received
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button onClick={closeModal} style={{ marginTop: 12 }}>
+            Close
+          </Button>
         </>
       );
 
