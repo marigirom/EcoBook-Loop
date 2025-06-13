@@ -30,6 +30,7 @@ require('dotenv').config();
 const sequelize = require('./config/db');
 const User = require('./models/User');
 const Material = require('./models/Material');
+const MaterialRequest = require('./models/MaterialRequest');
 
 //sync to database
 sequelize.sync().then(()=> {

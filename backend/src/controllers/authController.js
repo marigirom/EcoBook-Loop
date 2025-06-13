@@ -2,7 +2,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 //const pool = require('../config/db');
 
-const { User, Material } = require('../models');
+const { User, Material, MaterialRequest } = require('../models');
+//const MaterialRequest = require('../models/MaterialRequest');
 
 
 exports.register = async (req, res) => {
@@ -114,3 +115,111 @@ exports.getMaterials = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching materials' });
   }
 };
+
+// Create a material request
+exports.createRequest = async (req, res) => {
+  try {
+    const { materialId, type } = req.body;
+    const requesterId = req.user.userId;
+
+    if (!materialId || !type) {
+      return res.status(400).json({ message: 'Material ID and type are required.' });
+    }
+
+    const material = await Material.findByPk(materialId);
+    if (!material) {
+      return res.status(404).json({ message: 'Material not found.' });
+    }
+
+    const newRequest = await MaterialRequest.create({
+      materialId,
+      requesterId,
+      status: 'Pending',
+      type,
+    });
+
+    res.status(201).json({ message: 'Request created.', request: newRequest });
+  } catch (error) {
+    console.error('Create request error:', error);
+    res.status(500).json({ message: 'Server error creating request.' });
+  }
+};
+
+// Get requests made by current user
+exports.getMyBookRequests = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const requests = await MaterialRequest.findAll({
+     where: { requesterId: userId},
+     include: [
+      { model: Material, as: 'material', where: {type: 'book'}, required: true, },
+      { model: User, as: 'requester', attributes:['id', 'name'] },
+     ],
+    });
+    res.status(200).json({requests});
+  } catch (error) {
+    console.error('Error fetching book requests:', error);
+    res.status(500).json({ message: 'Error fetching book requests.' });
+  }
+};
+
+
+// Get requests for a user's listed materials//**to check❌❌ */
+exports.getRequestsForMyMaterials = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const requests = await MaterialRequest.findAll({
+      include: [
+        { model: Material, as: 'material', where: { userId } },
+        { model: User, as: 'requester', attributes: ['id', 'name'] },
+      ],
+    });
+    res.status(200).json({requests});
+  } catch (error) {
+    console.error('Error getting requests:', error);
+    res.status(500).json({ message: 'Server error fetching requests.' });
+  }
+};
+
+//get the papermill's recycling requests
+exports.getMyRecyclableRequests = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const requests = await MaterialRequest.findAll({
+      where: {requesterId: userId},
+      include: [
+        { model: Material, as: 'material', where: {type: 'recyclable'} },
+        { model: User, as: 'requester', attributes: ['id', 'name', 'phone', 'email'] },
+      ],
+    });
+
+    res.status(200).json({ requests });
+  } catch (error) {
+    console.error('Error fetching recyclable requests:', error);
+    res.status(500).json({ message: 'Server error fetching recyclable requests.' });
+  }
+};
+
+
+// Update request status (e.g., Deliver or Mark as Received)
+exports.updateRequestStatus = async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const { status } = req.body;
+
+    const request = await MaterialRequest.findByPk(requestId);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    request.status = status;
+    await request.save();
+
+    res.status(200).json({ message: 'Status updated', request });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating request status' });
+  }
+};
+
+
