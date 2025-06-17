@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '../components/ui/Ui';
 import { FaBell, FaUserCircle, FaDollarSign } from 'react-icons/fa';
 //import {jwtDecode} from 'jwt-decode';
@@ -17,10 +18,17 @@ const Layout = () => {
 
   const [activeTab, setActiveTab] = useState('donate');
   const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
+  const navigate = useNavigate();
 
   const toggleAvatarDropdown = () => setShowAvatarDropdown(!showAvatarDropdown);
   const onNotificationsClick = () => alert('Open notifications panel');
   const onBonusClick = () => alert('Show bonus info');
+  //notifications
+  const notifications = [
+    { message: 'Requests approved for Book'},
+    { message: 'Pickup scheduled for recyclable'},
+    { message: 'Bonus earned: Ksh 100'}
+  ];
 
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState(null);
@@ -322,6 +330,7 @@ const toggleSelectMaterial = (id) => {
           <div className="nav-tabs">
             <Button variant={activeTab === 'donate' ? 'primary' : 'outline'} onClick={() => setActiveTab('donate')}>Donate/Receive</Button>
             <Button variant={activeTab === 'recycle' ? 'primary' : 'outline'} onClick={() => setActiveTab('recycle')}>Find Recyclables</Button>
+            <Button variant={activeTab === 'activity' ? 'primary' : 'outline'} onClick={() => setActiveTab('activity')}>My Activity</Button>
           </div>
         </div>
 
@@ -360,13 +369,64 @@ const toggleSelectMaterial = (id) => {
         </>
       )}
 
+     
+
       {activeTab === 'recycle' && (
-        <>
-          <h4 className="section-title">Find materials to recycle</h4>
-          <div className="grid-container">
-            <Card><h5>Search Materials</h5><Button onClick={() => handleModal('searchMaterials')}>Search Materials</Button></Card>
-            <Card><h5>Items to recycle</h5><Button onClick={() => handleModal('viewMillRequests')}>View requests</Button></Card>
-          </div>
+  <>
+    <h4 className="section-title">Find materials to recycle</h4>
+    <div className="grid-container">
+      <Card>
+        <h5>Search Materials</h5>
+        <p>Find available recyclable listings</p>
+        <Button onClick={() => handleModal('searchMaterials')}>Search Materials</Button>
+      </Card>
+
+      <Card>
+        <h5>My Requests</h5>
+        <Button onClick={() => handleModal('viewMillRequests')}>viewRequests</Button>
+        <p>Track your requests</p>
+        <Button onClick={() => navigate('/papermill')}>PaperMill</Button>
+      </Card>
+
+      <Card>
+        <h5>My History</h5>
+        <p>All materials requested</p>
+        <Button onClick={() => handleModal('viewMillRequests')}>Request History</Button>
+        <p>Bonus paid out</p>
+        <Button onClick={() => navigate('/ecopay')}>View Bonuses</Button>
+      </Card>
+    </div>
+  </>
+)}
+
+
+      {activeTab === 'activity' && (
+        <><h4 className='section-title'>My Activity</h4>
+        <div className='grid-container'>
+          <Card>
+            <h5>Bonus Earned</h5><Button onClick={() =>
+              navigate('ecopay')}>View Bonuses</Button>
+          </Card>
+          <Card><h5>All Deliveries</h5>
+          <p className="card-link" onClick={() => handleModal('viewDonorDeliveries')}>For my donated items</p>
+          <p className="card-link" onClick={() => handleModal('viewMillDeliveries')}>Mill: View delivery status for my requested materials</p>
+        </Card>
+        <Card><h5>Delete Listings</h5><Button onClick={() => handleModal('viewListed')}>Manage My Listings</Button></Card>
+        <Card><h5>Summary</h5><Button onClick={() => handleModal('viewSummary')}>View Summary</Button></Card>
+        </div>
+
+        <div className="notification-panel">
+        <h5>Notifications</h5>
+        <ul className="notification-list">
+          {notifications.length > 0 ? (
+            notifications.map((note, idx) => (
+              <li key={idx} className="notification-item">{note.message}</li>
+            ))
+          ) : (
+            <li className="notification-item">No new notifications</li>
+          )}
+        </ul>
+      </div>
         </>
       )}
 

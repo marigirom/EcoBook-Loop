@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import '../App.css';
 
 export default function Register() {
   const { login } = useAuth();
@@ -30,14 +31,18 @@ export default function Register() {
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <h2>Register</h2>
-      <input name="name" placeholder="Name" onChange={handleChange} required />
-      <input name="email" placeholder="Email" onChange={handleChange} required />
-      <input name="phone" placeholder="Phone" onChange={handleChange} required />
-      <input name="password" placeholder="Password" onChange={handleChange} type="password" required />
-      <button type="submit">Register</button>
-    </form>
+    return (
+    <div className="register-page">
+      <div className="register-card">
+        <form onSubmit={handleSubmit}>
+          <h2>SignUp</h2>
+          <input name="name" placeholder="Name" onChange={handleChange} required />
+          <input name="email" placeholder="Email" onChange={handleChange} required />
+          <input name="phone" placeholder="Phone" onChange={handleChange} required />
+          <input name="password" placeholder="Password" onChange={handleChange} type="password" required />
+          <button type="submit">Register</button>
+        </form>
+      </div>
+    </div>
   );
 }
