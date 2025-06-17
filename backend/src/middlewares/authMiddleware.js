@@ -36,5 +36,5 @@ const token = req.headers.authorization?.split(' ')[1];
   }
   catch (err) {
     return res.status(401).json({ message: 'Invalid token' });
-  };
-}
+  }
+};

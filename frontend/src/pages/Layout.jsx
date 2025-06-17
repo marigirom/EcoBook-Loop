@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { Card, Button } from '../components/ui/Ui';
 import { FaBell, FaUserCircle, FaDollarSign } from 'react-icons/fa';
-
+//import {jwtDecode} from 'jwt-decode';
 import ModalRenderer from '../components/ui/Modals';
 import '../app.css';
 
@@ -11,6 +11,9 @@ const locations = ['Nairobi', 'Mombasa', 'Kisumu', 'Eldoret'];
 
 const Layout = () => {
   const { token, logout } = useAuth();
+//const decoded = token ? jwtDecode(token): {};
+//const userId = decoded.userId;
+
 
   const [activeTab, setActiveTab] = useState('donate');
   const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
@@ -29,7 +32,8 @@ const [searchResults, setSearchResults] = useState([]);
 const [materialsSearchResults, setMaterialsSearchResults] = useState([]);
 const [selectedMaterials, setSelectedMaterials] = useState([]);
 const [requestedMaterials, setRequestedMaterials ] = useState([]);
-
+const [availableBooks, setAvailableBooks] = useState([]);
+const[availableItems, setAvailableItems] = useState([]);
 
   const [bookForm, setBookForm] = useState({ type: 'book', title: '', condition: 'new', location: locations[0] });
   const [itemForm, setItemForm] = useState({ category: 'Magazine', copies: '', location: locations[0] });
@@ -61,6 +65,32 @@ const [requestedMaterials, setRequestedMaterials ] = useState([]);
       console.error('Failed to fetch materials:', err);
     }
   }, [token]);
+
+  //fetch all available materials
+
+  const fetchAvailableMaterials = useCallback(async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/inventory/availableMaterials', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const all = res.data.materials;
+    setAvailableBooks(all.filter(item => item.type === 'book'));
+    setAvailableItems(all.filter(item => item.type !== 'book'));
+  } catch (err) {
+    console.error('Failed to fetch available materials:', err);
+  }
+}, [token]);
+useEffect(() => {
+  if (modalContent === 'searchBook' || modalContent === 'searchMaterials') {
+    fetchAvailableMaterials(); // fetch from other users
+  } else if (modalContent === 'viewListed') {
+    fetchListedMaterials(); // fetch your own listed materials
+  }
+}, [modalContent, fetchListedMaterials, fetchAvailableMaterials]);
+
+
+
+
 //fetch requests after recipient or papermill requests for book or material respectively **//Notgood❌
   const fetchRequests = useCallback(async () => {
     try {
@@ -74,9 +104,9 @@ const [requestedMaterials, setRequestedMaterials ] = useState([]);
   }, [token]);
 
   useEffect(() => {
-    fetchListedMaterials();
+    
     fetchRequests();
-  }, [fetchListedMaterials, fetchRequests]);
+  }, [ fetchRequests]);
 
 //for the above chunk, the database is updated, but recipient can't view requested materials
 //Fix✔✔✔
@@ -165,13 +195,17 @@ useEffect(() => {
   });
 //Search for available book when you want to receive from a donor** //Good✔✔ 
   const submitSearchBook = (e) => {
-    e.preventDefault();
-    const filtered = listedBooks.filter(b =>
-      b.location === searchForm.location &&
-      b.title.toLowerCase().includes(searchForm.title.toLowerCase())
-    );
-    setSearchResults(filtered);
-  };
+  e.preventDefault();
+
+  // AvailableBooks already excludes own books (from backend logic)
+  const filtered = availableBooks.filter(b =>
+    b.location === searchForm.location &&
+    b.title.toLowerCase().includes(searchForm.title.toLowerCase())
+  );
+
+  setSearchResults(filtered);
+};
+
 //Submit book request**//Good✔✔ Book request has been sbmitted successfully and database updated
   const submitRequestBook = async (book) => {
   try {
@@ -225,19 +259,25 @@ const submitMarkReceived = async (reqId) => {
 };
 
 //search for items to recycle** //Good✔✔
-  const submitSearchMaterials = (e) => {
-    e.preventDefault();
-    const filtered = listedItems.filter(i => i.location === materialSearchForm.location);
-    setMaterialsSearchResults(filtered);
-  };
+ const submitSearchMaterials = (e) => {
+  e.preventDefault();
 
-  const toggleSelectMaterial = (id) => {
-    setSelectedMaterials(
-      selectedMaterials.includes(id)
-        ? selectedMaterials.filter(mid => mid !== id)
-        : [...selectedMaterials, id]
-    );
-  };
+  // Filter only available materials not owned by the current user
+  const filtered = availableItems.filter(i =>
+    i.location === materialSearchForm.location
+  );
+
+  setMaterialsSearchResults(filtered);
+};
+
+const toggleSelectMaterial = (id) => {
+  setSelectedMaterials(prev =>
+    prev.includes(id)
+      ? prev.filter(mid => mid !== id)
+      : [...prev, id]
+  );
+};
+
 
 //Submit book request**//Good✔✔ Book request has been sbmitted successfully and database updated
 
@@ -340,6 +380,8 @@ const submitMarkReceived = async (reqId) => {
                 locations={locations}
                 listedBooks={booksWithStatus}
                 listedItems={listedItems}
+                availableBooks={availableBooks}
+                availableItems={availableItems}
                 requests={requests}
                 requestedBooks={requestedBooks}
                 searchResults={searchResults}

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const { User, Material, MaterialRequest } = require('../models');
 //const MaterialRequest = require('../models/MaterialRequest');
+const { Op } = require('sequelize');
 
 
 exports.register = async (req, res) => {
@@ -30,15 +31,20 @@ try {
 
 //the login using database
 exports.login = async ( req, res) => {
+  //const { email, password } = req.body;
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ where: { email }});
+    const user = await User.findOne({ where: { email}});
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     const isMatch = await bcrypt.compare(password, user.passwordHash);
+    /*if (!passwordHash) {
+      return res.status(401).json({ message: 'Wrong Password'})
+    }*/
+   
   // Generate a JWT token
     const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: '1h',
@@ -99,10 +105,10 @@ exports.createMaterial = async (req, res) => {
 
 exports.getMaterials = async (req, res) => {
   try {
-    const  userId = req.user.userId;
+    //const  userId = req.user.userId;
 
     const materials = await Material.findAll({
-      where: { userId },
+      where: { userId: req.user.userId },
       include: [{
         model: User,
         as: 'user',
@@ -145,6 +151,26 @@ exports.createRequest = async (req, res) => {
   }
 };
 
+// View materials listed by other users (not self)
+exports.getAvailableMaterials = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const materials = await Material.findAll({
+      where: {
+        userId: { [Op.ne]: userId }, // Not listed by this user
+      },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.status(200).json({ materials });
+  } catch (error) {
+    console.error('Get available materials error:', error);
+    res.status(500).json({ message: 'Server error retrieving materials.' });
+  }
+};
+
 // Get requests made by current user
 exports.getMyBookRequests = async (req, res) => {
   try {
@@ -182,6 +208,7 @@ exports.getRequestsForMyMaterials = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching requests.' });
   }
 };
+
 
 //get the papermill's recycling requests
 exports.getMyRecyclableRequests = async (req, res) => {
