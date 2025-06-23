@@ -31,7 +31,7 @@ const sequelize = require('./config/db');
 const User = require('./models/User');
 const Material = require('./models/Material');
 const MaterialRequest = require('./models/MaterialRequest');
-
+const Notification = require('./models/Notification');
 //sync to database
 sequelize.sync().then(()=> {
   console.log('Database synced');
@@ -51,7 +51,7 @@ app.use('/schedule', require('./routes/schedule'));
 app.use('/mill', require('./routes/mill'));
 app.use('/payments', require('./routes/payments'));
 app.use('/ussd', require('./routes/ussd'));
-
+app.use('/notifications', require('./routes/notifications'));
 // Root route
 app.get('/', (req, res) => {
   res.send(' EcoBook API is up and running!');

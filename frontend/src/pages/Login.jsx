@@ -95,7 +95,7 @@ export default function Login() {
     try {
       const res = await api.post('/auth/login', form);
       login(res.data.token);
-      alert('Logged in successfully');
+      //alert('Logged in successfully');
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');

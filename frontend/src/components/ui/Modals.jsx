@@ -99,7 +99,7 @@ const ModalRenderer = ({
             min="1"
             required
             value={formState.copies}
-            onChange={(e) => setFormState({ ...formState, copies: e.target.value })}
+            onChange={(e) => setFormState({ ...formState, copies: Number(e.target.value) })}
           />
           <label>Location:</label>
           <select
@@ -228,7 +228,7 @@ const ModalRenderer = ({
               {requestedBooks.map((book) => (
                 <li key={book.id}>
                   {book.title} - Status: {book.status}
-                  {book.status === 'Delivery Initiated' && (
+                  {book.status === 'In-transit' && (
                     <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onMarkReceived(book.id)}>
                       Mark as Received
                     </Button>

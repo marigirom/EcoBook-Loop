@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-
+import Notifications from './pages/Notification';
 
 import './App.css';
 import PrivateRoute from './contexts/PrivateRoute';
@@ -24,6 +24,14 @@ function App() {
             <Dashboard/>
            </PrivateRoute>
            }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <PrivateRoute>
+              <Notifications />
+            </PrivateRoute>
+          }
         />
       </Routes>
     </Router>

@@ -446,3 +446,72 @@ ul li {
 .card-link:hover {
   color: #ffffff;
 }
+
+/*notifications-page*/
+.notif-wrapper {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
+
+.notif-header {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 1.5rem;
+  color: #003366;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notif-card {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #fff;
+  border-left: 6px solid #2196F3;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.notif-card.read {
+  opacity: 0.7;
+  border-left-color: #ccc;
+}
+
+.notif-message {
+  font-size: 16px;
+  margin-bottom: 0.5rem;
+  color: black;
+}
+
+.notif-timestamp {
+  font-size: 12px;
+  color: #777;
+}
+
+.notif-btn {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #4CAF50;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.notif-btn:hover {
+  background-color: #388e3c;
+}
+
+.notif-loading,
+.notif-error,
+.notif-empty {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+}

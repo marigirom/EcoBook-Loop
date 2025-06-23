@@ -21,7 +21,8 @@ const Layout = () => {
   const navigate = useNavigate();
 
   const toggleAvatarDropdown = () => setShowAvatarDropdown(!showAvatarDropdown);
-  const onNotificationsClick = () => alert('Open notifications panel');
+  //const onNotificationsClick = () => alert('Open notifications panel');
+   const onNotificationsClick = () => navigate('/Notifications');
   const onBonusClick = () => alert('Show bonus info');
   //notifications
   const notifications = [
@@ -45,7 +46,7 @@ const[availableItems, setAvailableItems] = useState([]);
 
   const [bookForm, setBookForm] = useState({ type: 'book', title: '', condition: 'new', location: locations[0] });
   const [itemForm, setItemForm] = useState({ category: 'Magazine', copies: '', location: locations[0] });
-  const [searchForm, setSearchForm] = useState({ title: '', location: locations[0] });
+  const [formState, setformState] = useState({ title: '', location: locations[0] });
   const [materialSearchForm, setMaterialSearchForm] = useState({ location: locations[0] });
 
   const [listedBooks, setListedBooks] = useState([]);
@@ -60,70 +61,69 @@ const[availableItems, setAvailableItems] = useState([]);
     setModalContent(type);
     setShowModal(true);
   };
-//fetch from materials table** //Good✔
-  const fetchListedMaterials = useCallback(async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/inventory/materials', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const all = res.data.materials;
-      setListedBooks(all.filter(item => item.type === 'book'));
-      setListedItems(all.filter(item => item.type !== 'book'));
-    } catch (err) {
-      console.error('Failed to fetch materials:', err);
-    }
-  }, [token]);
+//import { useCallback, useEffect } from 'react';
 
-  //fetch all available materials
+// FETCH LISTED MATERIALS (Your own)
+const fetchListedMaterials = useCallback(async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/inventory/materials', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const all = res.data.materials;
+    setListedBooks(all.filter(item => item.type === 'book'));
+    setListedItems(all.filter(item => item.type !== 'book'));
+  } catch (err) {
+    console.error('Failed to fetch materials:', err);
+  }
+}, [token]);
 
-  const fetchAvailableMaterials = useCallback(async () => {
+// FETCH AVAILABLE MATERIALS (From others)
+const fetchAvailableMaterials = useCallback(async () => {
   try {
     const res = await axios.get('http://localhost:5000/inventory/availableMaterials', {
       headers: { Authorization: `Bearer ${token}` },
     });
     const all = res.data.materials;
+
+    // Only filter recyclables by .available
     setAvailableBooks(all.filter(item => item.type === 'book'));
-    setAvailableItems(all.filter(item => item.type !== 'book'));
+
+    setAvailableItems(all.filter(item => item.type !== 'book' && item.available !== false));
   } catch (err) {
     console.error('Failed to fetch available materials:', err);
   }
 }, [token]);
-useEffect(() => {
-  if (modalContent === 'searchBook' || modalContent === 'searchMaterials') {
-    fetchAvailableMaterials(); // fetch from other users
-  } else if (modalContent === 'viewListed') {
-    fetchListedMaterials(); // fetch your own listed materials
-  }
-}, [modalContent, fetchListedMaterials, fetchAvailableMaterials]);
 
 
-
-
-//fetch requests after recipient or papermill requests for book or material respectively **//Notgood❌
-  const fetchRequests = useCallback(async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/inventory/incomingRequest', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRequests(res.data.requests);
-    } catch (err) {
-      console.error('Failed to fetch requests:', err);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    
-    fetchRequests();
-  }, [ fetchRequests]);
-
-//for the above chunk, the database is updated, but recipient can't view requested materials
-//Fix✔✔✔
-const fetchRequestedBooks = async () => {
+// FETCH INCOMING REQUESTS (To your listings)
+const fetchRequests = useCallback(async () => {
   try {
-    const response = await axios.get('http://localhost:5000/inventory/BookRequest', {
+    const res = await axios.get('http://localhost:5000/inventory/incomingRequest', {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const books = response.data.requests.map(req => ({
+    const formatted = res.data.requests.map(req => ({
+      id: req.id,
+      title: req.material?.title || 'Untitled',
+      type: req.material?.type || 'Unknown',
+      category: req.material?.category || 'N/A',
+      copies: req.material?.copies ?? 1,
+      status: req.status,
+      requestedBy: req.name || 'Unknown',
+      material: req.material
+    }));
+    setRequests(formatted);
+  } catch (err) {
+    console.error('Failed to fetch requests:', err);
+  }
+}, [token]);
+
+// FETCH BOOKS YOU REQUESTED
+const fetchRequestedBooks = useCallback(async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/inventory/BookRequest', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const books = res.data.requests.map(req => ({
       id: req.id,
       title: req.material?.title || 'Untitled',
       status: req.status,
@@ -133,24 +133,19 @@ const fetchRequestedBooks = async () => {
     console.error('Error fetching requested books:', err);
     alert('Failed to fetch your requested books');
   }
-};
-useEffect(() => {
-  if (modalContent === 'myRequestedBooks') {
-    fetchRequestedBooks();
-  }
-});
+}, [token]);
 
-//fetch RECYCALBLE MATERIALS I REQUESTED** ✔🆗
-const fetchRequestedRecyclables = async () => {
+// FETCH RECYCLABLES YOU REQUESTED
+const fetchRequestedRecyclables = useCallback(async () => {
   try {
-    const response = await axios.get('http://localhost:5000/inventory/OutgoingRequest', {
+    const res = await axios.get('http://localhost:5000/inventory/OutgoingRequest', {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const materials = response.data.requests.map(req => ({
+    const materials = res.data.requests.map(req => ({
       id: req.id,
-      category: req.material.category,
-      copies: req.material.copies,
-      location: req.material.location,
+      category: req.material?.category || 'Unknown',
+      copies: req.material?.copies ?? 1,
+      location: req.material?.location || 'N/A',
       status: req.status,
     }));
     setRequestedMaterials(materials);
@@ -158,86 +153,117 @@ const fetchRequestedRecyclables = async () => {
     console.error('Error fetching requested recyclables:', err);
     alert('Failed to fetch requested recyclables');
   }
-};
+}, [token]);
 
+// RUN FETCHES ON MODAL LOAD
 useEffect(() => {
-  if (modalContent === 'viewMillRequests') {
+  if (modalContent === 'searchBook' || modalContent === 'searchMaterials') {
+    fetchAvailableMaterials();
+  } else if (modalContent === 'viewListed') {
+    fetchListedMaterials();
+  } else if (modalContent === 'myRequestedBooks') {
+    fetchRequestedBooks();
+  } else if (modalContent === 'viewMillRequests') {
     fetchRequestedRecyclables();
+  } else if (modalContent === 'viewRequests') {
+    fetchRequests();
   }
-});
+}, [
+  modalContent,
+  fetchListedMaterials,
+  fetchAvailableMaterials,
+  fetchRequestedBooks,
+  fetchRequestedRecyclables,
+  fetchRequests,
+]);
 
-//List a new book, update the database** //Good✔
-  const submitListBook = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('http://localhost:5000/inventory/materials', { ...bookForm, type: 'book' }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      await fetchListedMaterials();
-      alert('Book listed successfully');
-      closeModal();
-    } catch (err) {
-      console.error('Error listing book:', err);
-      alert('Failed to list book');
-    }
-  };
-//List a new item to recycle and update database** //Good✔✔
-  const submitListItem = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('http://localhost:5000/inventory/materials', { ...itemForm, type: 'recyclable' }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      await fetchListedMaterials();
-      alert('Recyclable item listed successfully');
-      closeModal();
-    } catch (err) {
-      console.error('Error listing item:', err);
-      alert('Failed to list item');
-    }
-  };
-//check status of books** //Good✔✔ but only showing 'not requested yet'
-  const booksWithStatus = listedBooks.map(book => {
-    const matchingRequest = requests.find(r => r.material?.id === book.id);
-    return { ...book, status: matchingRequest?.status || 'Not requested yet' };
-  });
-//Search for available book when you want to receive from a donor** //Good✔✔ 
-  const submitSearchBook = (e) => {
+// LIST NEW BOOK
+const submitListBook = async (e) => {
   e.preventDefault();
-
-  // AvailableBooks already excludes own books (from backend logic)
-  const filtered = availableBooks.filter(b =>
-    b.location === searchForm.location &&
-    b.title.toLowerCase().includes(searchForm.title.toLowerCase())
-  );
-
-  setSearchResults(filtered);
-};
-
-//Submit book request**//Good✔✔ Book request has been sbmitted successfully and database updated
-  const submitRequestBook = async (book) => {
   try {
-    await axios.post('http://localhost:5000/inventory/newRequest', {
-      materialId: book.id,
-      type: 'book'
+    await axios.post('http://localhost:5000/inventory/materials', {
+      ...bookForm,
+      type: 'book',
     }, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    await fetchRequests();
-    alert(`Requested "${book.title}"`);
+    await fetchListedMaterials();
+    alert('Book listed successfully');
+    closeModal();
   } catch (err) {
-    console.error('Error requesting book:', err);
-    alert('Failed to request book');
+    console.error('Error listing book:', err);
+    alert('Failed to list book');
+  }
+};
+
+// LIST NEW RECYCLABLE
+const submitListItem = async (e) => {
+  e.preventDefault();
+  try {
+    await axios.post('http://localhost:5000/inventory/materials', {
+      ...itemForm,
+      type: 'recyclable',
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await fetchListedMaterials();
+    alert('Recyclable item listed successfully');
+    closeModal();
+  } catch (err) {
+    console.error('Error listing item:', err);
+    alert('Failed to list item');
+  }
+};
+
+// SEARCH FOR A BOOK
+const submitSearchBook = (e) => {
+  e.preventDefault();
+  const filtered = availableBooks.filter(b =>
+    b.location === formState.location &&
+    b.title.toLowerCase().includes(formState.title.toLowerCase())
+  );
+  setSearchResults(filtered);
+};
+
+// REQUEST A BOOK (Only if still available)
+const submitRequestBook = async (book) => {
+  try {
+    await axios.post('http://localhost:5000/inventory/newRequest', {
+      materialId: book.id,
+      type: 'book',
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    await fetchAvailableMaterials();
+    await fetchRequestedBooks();
+    alert(`Requested "${book.title}" successfully`);
+  } catch (err) {
+    if (err.response?.data?.error) {
+      alert(err.response.data.error);
+    } else {
+      console.error('Error requesting book:', err);
+      alert('Failed to request book');
+    }
   }
 };
 
 
-//For this **Not Good❌❌ the donor's 'view requests' function is missing so he cannot submit deliver
+// STATUS FOR YOUR BOOK LISTINGS
+const booksWithStatus = listedBooks.map(book => {
+  const match = requests.find(r => r.material?.id === book.id);
+  return { ...book, status: match?.status || 'Not requested yet' };
+});
+
+
+
+/*For thi  the donor's 'view requests' modal needs a small button to 'deliver' requested book after 
+which notification is sent to recipient that book will be dispatched in 2 days, request status is updated to initiated delivery*/
 const submitDeliverRequest = async (reqId) => {
   try {
     await axios.patch('http://localhost:5000/inventory/requestStatus', {
       requestId: reqId,
-      status: 'in_transit'
+      status: 'In-transit'
     }, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -248,75 +274,102 @@ const submitDeliverRequest = async (reqId) => {
   }
 };
 
-//**Missing the 'view my requests function **//
 
-//For the below chunk //** Not Good ❌❌, the recipient's 'View requests function missing so he cannot mark as received.
+/*For the below chunk , in 'myrequests' card modal beside each book, a button to mark received
+and notification sent to donor that book has been delivered successfully and request status updated to delivered from initiated deleivery*/
+//pending
 const submitMarkReceived = async (reqId) => {
   try {
     await axios.patch('http://localhost:5000/inventory/requestStatus', {
       requestId: reqId,
-      status: 'delivered'
+      status: 'Delivered'
     }, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    await fetchRequests();
+    
+    await fetchRequests();       // Refresh recipient's request list
+    await fetchRequestedBooks(); // Refresh their requested books
     alert('Marked as received.');
   } catch (err) {
     console.error('Error marking as received:', err);
+    alert('Failed to mark as received.');
   }
 };
 
-//search for items to recycle** //Good✔✔
- const submitSearchMaterials = (e) => {
+
+// 🔍 Search for recyclable materials by location
+const submitSearchMaterials = (e) => {
   e.preventDefault();
-
-  // Filter only available materials not owned by the current user
-  const filtered = availableItems.filter(i =>
-    i.location === materialSearchForm.location
+  const filtered = availableItems.filter(item =>
+    item.location === materialSearchForm.location && item.available !== false
   );
-
   setMaterialsSearchResults(filtered);
 };
 
+//  Toggle material selection (select or deselect)
 const toggleSelectMaterial = (id) => {
   setSelectedMaterials(prev =>
     prev.includes(id)
-      ? prev.filter(mid => mid !== id)
-      : [...prev, id]
+      ? prev.filter(mid => mid !== id) // Deselect
+      : [...prev, id]                  // Select
   );
 };
 
+// Submit recyclable material requests
+const submitRequestMaterials = async () => {
+  if (selectedMaterials.length === 0) {
+    alert('Please select materials to request.');
+    return;
+  }
 
-//Submit book request**//Good✔✔ Book request has been sbmitted successfully and database updated
+  try {
+    const results = await Promise.allSettled(
+      selectedMaterials.map(id =>
+        axios.post('http://localhost:5000/inventory/newRequest', {
+          materialId: id,
+          type: 'recyclable'
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      )
+    );
 
-  const submitRequestMaterials = async () => {
-    if (selectedMaterials.length === 0) {
-      alert('Please select materials');
-      return;
+    const successful = results
+      .filter(res => res.status === 'fulfilled')
+      .map((_, index) => selectedMaterials[index]);
+
+    const failed = results
+      .filter(res => res.status === 'rejected')
+      .map((res, index) => {
+        const id = selectedMaterials[index];
+        const msg = res.reason?.response?.data?.error || 'Request failed';
+        console.warn(`Material ID ${id}: ${msg}`);
+        return { id, msg };
+      });
+
+    // Feedback to user
+    if (successful.length > 0) {
+      alert(`Successfully requested: ${successful.join(', ')}`);
     }
-    try {
-      await Promise.all(
-        selectedMaterials.map(id =>
-          axios.post('http://localhost:5000/inventory/newRequest', {
-            materialId: id,
-            type: 'recyclable'
-          }, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        )
-      );
-      await fetchRequests();
-      alert(`Requested materials with IDs: ${selectedMaterials.join(', ')}`);
-      closeModal();
-    } catch (err) {
-      console.error('Error requesting materials:', err);
-      alert('Failed to request materials');
+
+    if (failed.length > 0) {
+      alert(`Some materials were not requested:\n${failed.map(f => `ID ${f.id}: ${f.msg}`).join('\n')}`);
     }
-  };
+
+    await fetchAvailableMaterials();
+    await fetchRequestedRecyclables();
+    closeModal();
+  } catch (err) {
+    console.error('Unexpected error requesting materials:', err);
+    alert('An error occurred while requesting materials.');
+  }
+};
+
 //for the above chunk, the database is updated, but papermill can't view their requested materials'items to recycle'
 
-//For this **Not Good❌❌ the donor's 'view requests' function is missing so he cannot submit deliver
+/**Here the papermill page will handle this */
   const submitMarkRecyclableReceived = submitMarkReceived;
+  
   const submitSchedulePickup = submitDeliverRequest;
 
   
@@ -452,13 +505,13 @@ const toggleSelectMaterial = (id) => {
                 formState={
                   modalContent === 'listBook' ? bookForm :
                   modalContent === 'listItem' ? itemForm :
-                  modalContent === 'searchBook' ? searchForm :
+                  modalContent === 'searchBook' ? formState :
                   materialSearchForm
                 }
                 setFormState={
                   modalContent === 'listBook' ? setBookForm :
                   modalContent === 'listItem' ? setItemForm :
-                  modalContent === 'searchBook' ? setSearchForm :
+                  modalContent === 'searchBook' ? setformState :
                   setMaterialSearchForm
                 }
                 onSubmit={
@@ -483,4 +536,4 @@ const toggleSelectMaterial = (id) => {
   );
 };
 
-export default Layout;
+export default Layout

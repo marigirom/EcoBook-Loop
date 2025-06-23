@@ -18,9 +18,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true, // Only for recyclables
     },
+    copies: {
+     type: DataTypes.INTEGER,
+     allowNull: true, //for books but required for recyclables 
+    },
     location: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    available:{
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
     },
     userId: {
       type: DataTypes.INTEGER,
