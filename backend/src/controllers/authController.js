@@ -1,10 +1,13 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-//const pool = require('../config/db');
 
-const { User, Material, MaterialRequest, Notification } = require('../models');
+
+const { User, Material, MaterialRequest, Notification, Schedule,BonusPayment } = require('../models');
+const mpesaService = require('../services/mpesaService');
+const transporter = require('../utils/mailer');
 //const MaterialRequest = require('../models/MaterialRequest');
 const { Op } = require('sequelize');
+const { request } = require('express');
 
 
 exports.register = async (req, res) => {
@@ -30,22 +33,21 @@ try {
 };
 
 //the login using database
-exports.login = async ( req, res) => {
-  //const { email, password } = req.body;
+exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ where: { email}});
+    const user = await User.findOne({ where: { email } });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    /*if (!passwordHash) {
-      return res.status(401).json({ message: 'Wrong Password'})
-    }*/
-   
-  // Generate a JWT token
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
     const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
@@ -54,7 +56,84 @@ exports.login = async ( req, res) => {
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ message: 'Server error during login' });
-   }
+  }
+};
+
+//frogot password
+// 1. Send OTP to user's email
+exports.sendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins from now
+
+    console.log('----- OTP GENERATION DEBUG -----');
+    console.log('Current UTC Time:', new Date().toISOString());
+    console.log('Generated Expiry UTC:', expiry.toISOString());
+    console.log('--------------------------------');
+
+    await user.update({ otp, otpExpiresAt: expiry });
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to: email,
+      subject: 'EcoBook Password Reset OTP',
+      text: `Your OTP is: ${otp}. It expires in 10 minutes.`,
+    });
+
+    res.json({ message: 'OTP sent to your email' });
+
+  } catch (err) {
+    console.error('Error sending OTP:', err);
+    res.status(500).json({ message: 'Failed to send OTP' });
+  }
+};
+
+
+// 2. Reset password using OTP
+exports.resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  console.log('Request Body:', req.body);
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Logs for clarity
+    const now = new Date();
+    console.log('----- TIME DEBUG -----');
+    console.log('Current UTC Time:', now.toISOString());
+    console.log('Current Local Time:', now.toLocaleString());
+    console.log('Stored OTP:', user.otp);
+    console.log('Provided OTP:', otp);
+    console.log('OTP Expiry UTC:', user.otpExpiresAt.toISOString());
+    console.log('OTP Expiry Local:', user.otpExpiresAt.toLocaleString());
+    console.log('----------------------');
+
+    if (String(user.otp) !== String(otp) || now > user.otpExpiresAt) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await user.update({
+      passwordHash: hashed,
+      otp: null,
+      otpExpiresAt: null,
+    });
+
+    res.json({ message: 'Password reset successfully' });
+
+  } catch (err) {
+    console.error('Error resetting password:', err);
+    res.status(500).json({ message: 'Password reset failed' });
+  }
 };
 
 //Listin materials
@@ -275,6 +354,30 @@ exports.getMyRecyclableRequests = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching recyclable requests.' });
   }
 };
+//delivered recyclables
+
+exports.getDeliveredRecyclableRequests = async (req, res) => {
+  try {
+    const requests = await MaterialRequest.findAll({
+      where: { status: 'Delivered' },
+      include: [
+        {
+          model: Material,
+          as: 'material',
+          where: { type: 'recyclable' },
+          include: [
+            { model: User, as: 'user', attributes: ['id', 'name', 'phone', 'email'] }
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json({ requests });
+  } catch (error) {
+    console.error('Error fetching delivered recyclable requests:', error);
+    res.status(500).json({ message: 'Server error fetching delivered recyclable requests.' });
+  }
+};
 
 
 // Update request status (e.g., Deliver or Mark as Received)
@@ -377,5 +480,259 @@ exports.markAsRead = async (req, res) => {
   }
 };
 
+exports.createSchedule = async (req, res) => {
+  try {
+    const { requestId, scheduledDate, pickupLocation } = req.body;
+
+    // Create the schedule
+    const schedule = await Schedule.create({
+      requestId,
+      scheduledDate,
+      pickupLocation,
+    });
+
+    // Update request status
+    await MaterialRequest.update(
+      { status: 'Initiated-delivery' },
+      { where: { id: requestId } }
+    );
+
+    // Get donor ID
+    const request = await MaterialRequest.findByPk(requestId, {
+      include: [{ model: Material, as: 'material' }],
+    });
+
+    const userId = request.material.userId;
+
+    // Notify donor
+    await Notification.create({
+      userId: request.material.userId,
+      message: `Pickup scheduled for your recyclable item "${request.material.title}" on ${scheduledDate}.`,
+    });
+
+    res.status(201).json({ schedule });
+  } catch (err) {
+    console.error('Error scheduling pickup:', err);
+    res.status(500).json({ message: 'Server error scheduling pickup.' });
+  }
+};
+
+//bonus
 
 
+exports.processBonusPayment = async (req, res) => {
+  const { userId, materialId, amount } = req.body;
+
+  if (!userId || !materialId || !amount || isNaN(parseInt(amount, 10))) {
+    return res.status(400).json({ message: 'Invalid payment request. Check all fields.' });
+  }
+
+  try {
+    // Find donor
+    const donor = await User.findByPk(userId);
+    if (!donor) return res.status(404).json({ message: 'Donor not found.' });
+
+    // Find material
+    const material = await Material.findByPk(materialId, {
+      include: [{ model: User, as: 'user' }]
+    });
+    if (!material) return res.status(404).json({ message: 'Material not found.' });
+
+    // Find the latest relevant material request
+    const materialRequest = await MaterialRequest.findOne({
+      where: { materialId },
+      include: [{ model: User, as: 'requester' }]
+    });
+    if (!materialRequest) return res.status(404).json({ message: 'Material request not found.' });
+
+    // STK Push Simulation
+    const paymentResult = await mpesaService.initiateSTKPush(donor.phone, amount);
+    if (!paymentResult.success) {
+      return res.status(400).json({ message: 'M-Pesa STK Push failed.' });
+    }
+
+    // Record Payment
+    await BonusPayment.create({
+      userId,
+      materialId,
+      type: 'Reward-payment',
+      amount,
+      method: 'M-Pesa',
+      status: 'Completed',
+    });
+
+    // Notify Papermill User
+    await Notification.create({
+      userId: materialRequest.requester.id,
+      message: `Bonus payment of Ksh ${amount} has been made to ${donor.name} for the recyclable item (${material.category}).`
+    });
+
+    // Notify Donor
+    await Notification.create({
+      userId: donor.id,
+      message: `Bonus of Ksh ${amount} has been credited for your materials picked up on ${new Date().toLocaleDateString()}.`
+    });
+
+    res.status(200).json({ message: 'STK Push initiated. Notifications sent.' });
+
+  } catch (err) {
+    console.error('Error processing bonus payment:', err);
+    res.status(500).json({ message: 'Server error processing bonus payment.' });
+  }
+};
+
+
+exports.handleSTKCallback = async (req, res) => {
+  try {
+    const callbackData = req.body;
+    console.log('STK Push Callback Received:', JSON.stringify(callbackData, null, 2));
+
+    const resultCode = callbackData?.Body?.stkCallback?.ResultCode;
+    const metadata = callbackData?.Body?.stkCallback?.CallbackMetadata;
+
+    if (resultCode === 0 && metadata) {
+      const amount = metadata.Item.find(i => i.Name === 'Amount')?.Value;
+      const phone = metadata.Item.find(i => i.Name === 'PhoneNumber')?.Value;
+
+      const user = await User.findOne({ where: { phone } });
+      if (!user) return res.status(200).json({ message: 'Callback processed, user unknown.' });
+
+      const bonus = await BonusPayment.findOne({
+        where: {
+          userId: user.id,
+          amount,
+          status: 'Pending',
+        },
+        order: [['createdAt', 'DESC']],
+      });
+
+      if (bonus) {
+        bonus.status = 'Completed';
+        await bonus.save();
+      }
+    }
+
+    res.status(200).json({ message: 'Callback processed' });
+  } catch (err) {
+    console.error('Error handling STK Push callback:', err);
+    res.status(500).json({ message: 'Server error processing callback' });
+  }
+};
+
+//ussd handler
+
+//const { User, Material, MaterialRequest, Notification } = require('../models');
+
+exports.handleUSSD = async (req, res) => {
+  const { text, phoneNumber } = req.body;
+  const inputs = text.split('*');
+  let response = '';
+
+  const LOCATIONS = ['Kisumu', 'Mombasa', 'Nairobi', 'Eldoret'];
+
+  let user = await User.findOne({ where: { phone: phoneNumber } });
+
+  // Registration for unregistered users
+  if (!user) {
+    if (inputs.length === 1) {
+      response = 'CON Welcome to EcoBook. Enter your name:';
+    } else if (inputs.length === 2) {
+      await User.create({
+        name: inputs[1],
+        phone: phoneNumber,
+        email: `${phoneNumber}@ecobook.ussd`,
+        passwordHash: 'ussdplaceholder'
+      });
+      response = 'END Registration complete. Dial again to use EcoBook.';
+    }
+
+  } else {
+    // Main Menu
+    if (inputs[0] === '') {
+      response = `CON Welcome to EcoBook
+1. Donate Book
+2. Request Book
+0. Exit`;
+
+    // Book Donation Flow with Location Prompt
+    } else if (inputs[0] === '1') {
+      if (inputs.length === 1) {
+        response = 'CON Enter book title:';
+      } else if (inputs.length === 2) {
+        response = 'CON Enter book condition (new, good, fair):';
+      } else if (inputs.length === 3) {
+        let locList = '';
+        LOCATIONS.forEach((loc, idx) => {
+          locList += `${idx + 1}. ${loc}\n`;
+        });
+        response = `CON Select location:\n${locList}`;
+      } else if (inputs.length === 4) {
+        const locIndex = parseInt(inputs[3], 10) - 1;
+
+        if (locIndex < 0 || locIndex >= LOCATIONS.length) {
+          response = 'END Invalid location selected.';
+        } else {
+          await Material.create({
+            title: inputs[1],
+            condition: inputs[2],
+            type: 'book',
+            available: true,
+            userId: user.id,
+            location: LOCATIONS[locIndex]
+          });
+          response = 'END Book donation successful. Thank you!';
+        }
+      }
+
+    // Book Request Flow with Notification to Donor
+    } else if (inputs[0] === '2') {
+      if (inputs.length === 1) {
+        const books = await Material.findAll({ where: { type: 'book', available: true } });
+
+        if (books.length === 0) {
+          response = 'END No available books at the moment.';
+        } else {
+          let bookList = '';
+          books.forEach((book, index) => {
+            bookList += `${index + 1}. ${book.title} (${book.location})\n`;
+          });
+          response = `CON Select book to request:\n${bookList}`;
+        }
+      } else if (inputs.length === 2) {
+        const selectedIndex = parseInt(inputs[1], 10) - 1;
+        const books = await Material.findAll({ where: { type: 'book', available: true } });
+
+        if (selectedIndex < 0 || selectedIndex >= books.length) {
+          response = 'END Invalid selection.';
+        } else {
+          const selectedBook = books[selectedIndex];
+
+          await MaterialRequest.create({
+            materialId: selectedBook.id,
+            requesterId: user.id
+          });
+
+          selectedBook.available = false;
+          await selectedBook.save();
+
+          // Send notification to the donor
+          await Notification.create({
+            userId: selectedBook.userId,
+            message: `Your book "${selectedBook.title}" has been requested via USSD.`
+          });
+
+          response = 'END Book request successful. The donor will be notified.';
+        }
+      }
+
+    } else if (inputs[0] === '0') {
+      response = 'END Thank you for using EcoBook.';
+
+    } else {
+      response = 'END Invalid option.';
+    }
+  }
+
+  res.set('Content-Type', 'text/plain');
+  return res.send(response);
+};

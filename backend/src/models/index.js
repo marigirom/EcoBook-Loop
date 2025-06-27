@@ -1,34 +1,4 @@
-// index.js
 
-//const express = require('express');
-//const sequelize = require('../config/db');
-//const { DataTypes } = require('sequelize');
-
-//const User = require('../models/User')(sequelize, DataTypes);
-//const Material = require('../models/Material')(sequelize, DataTypes);
-
-// Setup associations
-//User.associate({ Material });
-//Material.associate && Material.associate({ User });
-
-//const app = express();
-//app.use(express.json());
-
-// your routes here...
-
-//(async () => {
-  //try {
-    //await sequelize.sync({ alter: true });  // sync all models once here
-    //console.log('Database synced');
-
-    //app.listen(3000, () => console.log('Server running on port 3000'));
-  //} catch (err) {
-    //console.error('Error syncing database:', err);
-  //}
-//})();
-// models/index.js
-// models/index.js
-// models/index.js
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');

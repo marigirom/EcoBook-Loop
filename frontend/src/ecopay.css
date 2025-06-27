@@ -1,0 +1,69 @@
+/*Styles specific for the ecopay page */
+.ecopay-wrapper {
+  padding: 24px;
+}
+
+.ecopay-header {
+  font-size: 1.8rem;
+  color: #102841;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  margin-bottom: 24px;
+  color: #ffffff;
+}
+
+.card-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.custom-card {
+  background: linear-gradient(135deg, #2e005a, #3a0b78);
+  border-radius: 20px;
+  padding: 1.5rem;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.custom-card:hover {
+  transform: translateY(-4px);
+}
+
+.custom-card-content p {
+  margin: 6px 0;
+}
+
+.custom-btn {
+  margin-top: 12px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 20px;
+  background: linear-gradient(to right, #ffdd00, #ff914d);
+  color: black;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.custom-btn:hover {
+  background: linear-gradient(to right, #ffc107, #ff6a00);
+}
+
+.success-text {
+  color: #1fbf6b;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.notif-empty, .notif-error, .notif-loading {
+  margin-top: 2rem;
+  text-align: center;
+  color: #ffffff;
+}
