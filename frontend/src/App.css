@@ -515,3 +515,160 @@ ul li {
   font-size: 16px;
   color: #666;
 }
+
+/*papermill section*/
+.papermill-wrapper {
+  padding: 2rem;
+  background: linear-gradient(90deg, #2e005a, #3a0b78);
+  min-height: 100vh;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+}
+
+.papermill-header {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.card-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.custom-card {
+  background: linear-gradient(135deg, #3a0b78, #512c88);
+  border-radius: 20px;
+  padding: 1.5rem;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.custom-card:hover {
+  transform: translateY(-4px);
+}
+
+.custom-card h5 {
+  font-size: 1.2rem;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+
+.custom-card-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.custom-card-content p {
+  margin: 0;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.custom-btn {
+  background: linear-gradient(to right, #ffdd00, #ff914d);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 0.8rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.custom-btn:hover {
+  background: linear-gradient(to right, #ffc107, #ff6a00);
+}
+
+.report-card {
+  background: linear-gradient(135deg, #1b1b2f, #3a0b78);
+  text-align: center;
+  margin: 0 auto;
+  max-width: 400px;
+  padding: 2rem;
+}
+
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  /*backdrop-filter: blur(2px);*/
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.payment-modal {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  color: black;
+  text-align: left;
+}
+
+.payment-modal h3 {
+  color: #102841;
+  margin-bottom: 1rem;
+}
+
+.payment-modal p {
+  margin-bottom: 0.5rem;
+  color: black;
+}
+
+.payment-modal input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+}
+
+.payment-modal input:focus {
+  border-color: #1fbf6b;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(31, 191, 107, 0.25);
+}
+
+.payment-modal .form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.payment-modal .cancel-btn {
+  background: #ccc;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.payment-modal .cancel-btn:hover {
+  background: #999;
+}
+
+
+
+
+
+
+

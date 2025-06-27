@@ -8,6 +8,7 @@ export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  //form to enter personal details
   const [form, setForm] = useState({
     name: '',
     email: '',
