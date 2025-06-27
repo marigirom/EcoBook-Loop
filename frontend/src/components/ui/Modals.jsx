@@ -17,6 +17,7 @@ const ModalRenderer = ({
   onSubmit,
   onRequestBook,
   onDeliverRequest,
+  onItemPickedUp,
   onMarkReceived,
   onToggleMaterial,
   onRequestMaterials,
@@ -120,28 +121,38 @@ const ModalRenderer = ({
       );
 
     case 'viewRequests':
-      return (
-        <>
-          <h5>View Requests</h5>
-          {requests.length === 0 ? (
-            <p>No requests found.</p>
-          ) : (
-            <ul>
-              {requests.map((req) => (
-                <li key={req.id}>
-                  <b>{req.title}</b> ({req.type}) - {req.requestedBy} - Status: {req.status}
-                  {req.type === 'book' && req.status === 'Pending' && (
-                    <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onDeliverRequest(req.id)}>
-                      Deliver
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <Button onClick={closeModal}>Close</Button>
-        </>
-      );
+  return (
+    <>
+      <h5>View Requests</h5>
+      {requests.length === 0 ? (
+        <p>No requests found.</p>
+      ) : (
+        <ul>
+          {requests.map((req) => (
+            <li key={req.id}>
+              <b>{req.title}</b> ({req.type}) - {req.requestedBy} - Status: {req.status}
+              
+              {/* Existing Deliver button for books */}
+              {req.type === 'book' && req.status === 'Pending' && (
+                <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onDeliverRequest(req.id)}>
+                  Deliver
+                </Button>
+              )}
+
+              {/* New Picked Up button for recyclables */}
+              {req.type === 'recyclable' && req.status === 'Initiated-delivery' && (
+                <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onItemPickedUp(req.id)}>
+                  Item Picked Up
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button onClick={closeModal}>Close</Button>
+    </>
+  );
+
 
     case 'viewStatus':
       return (
@@ -297,12 +308,12 @@ const ModalRenderer = ({
                   <b>{item.category}</b> ({item.copies} copies) - {item.location} <br />
                   <em>Status: {item.status}</em>
                   <div style={{ marginTop: 8 }}>
-                    {item.status === 'pending' && (
+                    {item.status === 'Pending' && (
                       <Button size="sm" onClick={() => alert(`Pickup scheduled for ${item.category} at ${item.location}`)}>
                         Schedule Pickup
                       </Button>
                     )}
-                    {item.status === 'in_transit' && (
+                    {item.status === 'In-transit' && (
                       <Button size="sm" onClick={() => onMarkMaterialReceived(item.id)}>
                         Mark as Received
                       </Button>

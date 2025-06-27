@@ -15,6 +15,7 @@ router.get('/BookRequest', auth, authController.getMyBookRequests);
 router.get('/incomingRequest', auth, authController.getRequestsForMyMaterials);//requests made for my listed materials
 router.get('/OutgoingRequest', auth, authController.getMyRecyclableRequests);
 router.get('/availableMaterials', auth, authController.getAvailableMaterials);
+router.get('/DeliveredRequests', auth, authController.getDeliveredRecyclableRequests);
 router.patch('/requestStatus', auth, authController.updateRequestStatus);
 
 module.exports = router;

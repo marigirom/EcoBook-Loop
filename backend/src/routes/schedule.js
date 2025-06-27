@@ -1,11 +1,14 @@
-// routes/inventory.js
-
 const express = require('express');
 const router = express.Router();
+//const { register, login} = require('../controllers/authController');
+const auth = require('../middlewares/authMiddleware');
+const authController = require('../controllers/authController');
 
 // Example route
-router.get('/', (req, res) => {
-  res.send('Schedule route works!');
-});
+router.post('/newSchedule', auth, authController.createSchedule);
 
-module.exports = router; 
+/*router.post('/register', register);
+router.post('/login', login);*/
+
+
+module.exports = router;

@@ -257,8 +257,7 @@ const booksWithStatus = listedBooks.map(book => {
 
 
 
-/*For thi  the donor's 'view requests' modal needs a small button to 'deliver' requested book after 
-which notification is sent to recipient that book will be dispatched in 2 days, request status is updated to initiated delivery*/
+//a notification is sent to recipient that book will be dispatched in 2 days, request status is updated to initiated delivery*/
 const submitDeliverRequest = async (reqId) => {
   try {
     await axios.patch('http://localhost:5000/inventory/requestStatus', {
@@ -275,9 +274,8 @@ const submitDeliverRequest = async (reqId) => {
 };
 
 
-/*For the below chunk , in 'myrequests' card modal beside each book, a button to mark received
-and notification sent to donor that book has been delivered successfully and request status updated to delivered from initiated deleivery*/
-//pending
+//a notification sent to donor that book has been delivered successfully and request status updated to delivered from initiated deleivery*/
+
 const submitMarkReceived = async (reqId) => {
   try {
     await axios.patch('http://localhost:5000/inventory/requestStatus', {
@@ -296,8 +294,28 @@ const submitMarkReceived = async (reqId) => {
   }
 };
 
+// Item picked up by papermill agent
 
-// 🔍 Search for recyclable materials by location
+// Donor marks item as picked up after Papermill arranged pickup
+const submitItemPickedUp = async (reqId) => {
+  try {
+    await axios.patch('http://localhost:5000/notifications/requestStatus', {
+      requestId: reqId,
+      status: 'In-transit'
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    await fetchRequests();
+    alert('Paper mill notified, item is in transit.');
+  } catch (err) {
+    console.error('Error updating item to In-transit:', err);
+    alert('Failed to update request status');
+  }
+};
+
+
+// Search for recyclable materials by location
 const submitSearchMaterials = (e) => {
   e.preventDefault();
   const filtered = availableItems.filter(item =>
@@ -306,7 +324,7 @@ const submitSearchMaterials = (e) => {
   setMaterialsSearchResults(filtered);
 };
 
-//  Toggle material selection (select or deselect)
+// Toggle material selection (select or deselect)
 const toggleSelectMaterial = (id) => {
   setSelectedMaterials(prev =>
     prev.includes(id)
@@ -365,14 +383,10 @@ const submitRequestMaterials = async () => {
   }
 };
 
-//for the above chunk, the database is updated, but papermill can't view their requested materials'items to recycle'
-
-/**Here the papermill page will handle this */
+/**Here the papermill page will handle this activity */
   const submitMarkRecyclableReceived = submitMarkReceived;
   
   const submitSchedulePickup = submitDeliverRequest;
-
-  
 
 
   return (
@@ -522,6 +536,7 @@ const submitRequestMaterials = async () => {
                 }
                 onRequestBook={submitRequestBook}
                 onDeliverRequest={submitDeliverRequest}
+                onItemPickedUp={submitItemPickedUp}
                 onMarkReceived={submitMarkReceived}
                 onToggleMaterial={toggleSelectMaterial}
                 onRequestMaterials={submitRequestMaterials}
