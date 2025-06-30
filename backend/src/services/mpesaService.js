@@ -4,13 +4,13 @@ const axios = require('axios');
 const moment = require('moment');
 
 const config = {
-  shortCode: '174379', // Replace with your Paybill or Till number for sandbox
-  passkey: 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919', // Get this from Safaricom Developer Portal
+  shortCode: '174379', //paybill
+  passkey: 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919', //from Safaricom Developer Portal
   consumerKey: 'wmdkWIoWoNG9PauLAEOVbNmNWNfQl25AyBvUaXMr9WrFwphj',
   consumerSecret: 'XS4kmw8d0rOxj1aLNgQ3u1CtBoiCFCSuDsdXUfLuvdgAyEYRvR7l7HMqb6z6CG9R',
   apiUrl: 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
   authUrl: 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
-  callbackUrl: 'https://sandbox.safaricom.co.ke', // For testing, you can simulate callback or expose via ngrok
+  callbackUrl: 'https://sandbox.safaricom.co.ke', // For testing, to simulate callback url
 };
 
 async function getAccessToken() {
