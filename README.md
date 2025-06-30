@@ -15,7 +15,7 @@ EcoBook Loop is built as a **Progressive Web App (PWA)** with **USSD integration
 
 **Frontend:**
 - React (PWA)
-- Tailwind CSS for styling
+- Basic CSS for styling
 
 **Backend:**
 - Node.js with Express
