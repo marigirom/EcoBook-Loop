@@ -10,7 +10,7 @@ const config = {
   consumerSecret: 'XS4kmw8d0rOxj1aLNgQ3u1CtBoiCFCSuDsdXUfLuvdgAyEYRvR7l7HMqb6z6CG9R',
   apiUrl: 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
   authUrl: 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
-  callbackUrl: 'https://example.com/stk-callback', // For testing, you can simulate callback or expose via ngrok
+  callbackUrl: 'https://sandbox.safaricom.co.ke', // For testing, you can simulate callback or expose via ngrok
 };
 
 async function getAccessToken() {

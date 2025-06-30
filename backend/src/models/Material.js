@@ -48,6 +48,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'userId',
       as: 'user',
     });
+     Material.hasMany(models.MaterialRequest, {
+        foreignKey: 'materialId',
+        as: 'requests',
+    });
   };
 
   return Material;

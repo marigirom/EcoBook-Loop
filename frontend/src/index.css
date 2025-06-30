@@ -22,6 +22,8 @@ body {
   color: #1d1f21;
   font-family: 'Segoe UI', sans-serif;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -42,4 +44,11 @@ h1, h2, h3, h4 {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+footer {
+  background: #0f2c4c;
+  color: white;
+  text-align: center;
+  padding: 12px;
 }

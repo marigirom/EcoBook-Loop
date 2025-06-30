@@ -12,6 +12,10 @@ const ModalRenderer = ({
   materialsSearchResults,
   selectedMaterials,
   requestedMaterials,
+  bonusSum,
+  listings,
+  summaryData,
+  deleteListing,
   formState,
   setFormState,
   onSubmit,
@@ -329,6 +333,59 @@ const ModalRenderer = ({
         </>
       );
 
+   case 'viewBonuses':
+  return (
+    <>
+      <h5>Bonuses Earned</h5>
+      <p>Ksh {bonusSum}</p>
+      <Button onClick={closeModal}>Close</Button>
+    </>
+  );
+
+  case 'manageListings':
+  return (
+    <>
+      <h5>My Listings</h5>
+      {listings.length === 0 ? (
+        <p>No items listed.</p>
+      ) : (
+        <ul>
+          {listings.map((item) => (
+            <li key={item.id}>
+              {item.title || item.category} - {item.type} - Status: {item.status}
+              {item.status === 'Delivered' && (
+                <Button size="sm" style={{ marginLeft: 8 }} onClick={() => deleteListing(item.id)}>
+                  Delete
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button onClick={closeModal}>Close</Button>
+    </>
+  );
+  case 'viewSummary':
+  return (
+    <>
+      <h5>Activity Summary</h5>
+      {summaryData.length === 0 ? (
+        <p>No activity to show.</p>
+      ) : (
+        <ul>
+          {summaryData.map((entry, index) => (
+            <li key={index}>
+              {entry.type === 'book' && `Book "${entry.title}" delivered on ${entry.deliveredAt}`}
+              {entry.type === 'recyclable' && `Recyclable "${entry.category}" received on ${entry.receivedAt}`}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button onClick={closeModal}>Close</Button>
+    </>
+  );
+
+   
     default:
       return null;
   }

@@ -1,4 +1,4 @@
-//Ecopay for bonus payment
+//Ecopay for bonus
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from '../services/api';
@@ -22,17 +22,21 @@ export default function EcoPay() {
   const loggedInUserId = decoded?.id;
 
   const fetchRequests = useCallback(async () => {
-    try {
-      const res = await api.get('http://localhost:5000/inventory/DeliveredRequests', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRequests(res.data.requests);
-    } catch {
-      setError('Failed to load delivered requests');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  setLoading(true); // You should set loading at the top to avoid false UI state
+  setError(null);
+  try {
+    const res = await api.get('http://localhost:5000/payments/PayRequests', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setRequests(res.data.requests);
+  } catch (err) {
+    console.error('Error fetching EcoPay requests:', err);
+    setError('Failed to load delivered requests');
+  } finally {
+    setLoading(false);
+  }
+}, [token]);
+
 
   useEffect(() => {
     fetchRequests();
@@ -46,6 +50,11 @@ export default function EcoPay() {
   };
 
   const openBonusForm = (req) => {
+    
+    if (req.paid) {
+    alert('Bonus already paid for this request.');
+    return;
+  }
     setSelectedRequest(req);
     setPaymentAmount('100');
     setShowForm(true);
@@ -64,13 +73,13 @@ export default function EcoPay() {
         userId: selectedRequest.material?.user?.id,
         materialId: selectedRequest.material?.id,
         amount: parseInt(paymentAmount, 10),
-        method: 'STK Push',
+        method: 'M-Pesa',
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       alert('STK Push initiated. User will approve on phone.');
-      fetchRequests();
+      await fetchRequests();
       closeBonusForm();
     } catch (err) {
       console.error(err);

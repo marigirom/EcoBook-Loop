@@ -12,48 +12,53 @@ import PrivateRoute from './contexts/PrivateRoute';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Show Login on both '/' and '/login' */}
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+    <div className="app-container">
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <PrivateRoute>
-              <Notifications />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/papermill"
-          element={
-            <PrivateRoute>
-              <PaperMill />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/ecopay"
-          element={
-            <PrivateRoute>
-              <EcoPay />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </Router>
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <PrivateRoute>
+                <Notifications />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/papermill"
+            element={
+              <PrivateRoute>
+                <PaperMill />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/ecopay"
+            element={
+              <PrivateRoute>
+                <EcoPay />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </Router>
+
+      <footer className="footer">
+        &copy; 2025 EcoBook Loop. All rights reserved.
+      </footer>
+    </div>
   );
 }
 

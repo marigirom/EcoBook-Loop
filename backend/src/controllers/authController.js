@@ -2,11 +2,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 
-const { User, Material, MaterialRequest, Notification, Schedule,BonusPayment } = require('../models');
+const { User, Material, MaterialRequest, Notification, Schedule, BonusPayment } = require('../models');
 const mpesaService = require('../services/mpesaService');
 const transporter = require('../utils/mailer');
 //const MaterialRequest = require('../models/MaterialRequest');
 const { Op } = require('sequelize');
+const { Parser } = require('json2csv');  
 const { request } = require('express');
 
 
@@ -136,15 +137,34 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+//get profile
+
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findByPk(userId, {
+      attributes: ['id', 'name', 'email']
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    console.error('Error fetching profile:', err);
+    res.status(500).json({ message: 'Server error fetching profile' });
+  }
+};
+
+
 //Listin materials
 
 //const { Material } = require('../models');
-
 exports.createMaterial = async (req, res) => {
   try {
-    console.log('req.user: ', req.user);
     const userId = req.user.userId;
-    //const userId = req.user.id;  // ✅ This matches your JWT structure
     const { type, title, condition, category, location, copies } = req.body;
 
     if (!['book', 'recyclable'].includes(type)) {
@@ -154,9 +174,11 @@ exports.createMaterial = async (req, res) => {
     if (type === 'book' && (!title || !condition)) {
       return res.status(400).json({ message: 'Title and condition are required for books' });
     }
+
     if (type === 'recyclable' && (!category || !copies || copies < 1)) {
       return res.status(400).json({ message: 'Category and valid number of copies is required for recyclables' });
     }
+
     if (!location) {
       return res.status(400).json({ message: 'Location is required' });
     }
@@ -167,18 +189,22 @@ exports.createMaterial = async (req, res) => {
       title: type === 'book' ? title : null,
       condition: type === 'book' ? condition : null,
       category: type === 'recyclable' ? category : null,
+      copies: type === 'recyclable' ? copies : null,   // ✅ Ensure copies are saved for recyclables
       location,
+      available: true
     });
 
     res.status(201).json({
       message: 'Material listed successfully',
       material: newMaterial,
     });
+    
   } catch (error) {
     console.error('Material listing error:', error);
     res.status(500).json({ message: 'Server error while listing material' });
   }
 };
+
 
 //const { Material, User } = require('../models');
 
@@ -359,7 +385,7 @@ exports.getMyRecyclableRequests = async (req, res) => {
 exports.getDeliveredRecyclableRequests = async (req, res) => {
   try {
     const requests = await MaterialRequest.findAll({
-      where: { status: 'Delivered' },
+      where: { requesterId: req.user.userId, status: 'Delivered' },
       include: [
         {
           model: Material,
@@ -528,52 +554,59 @@ exports.processBonusPayment = async (req, res) => {
   }
 
   try {
-    // Find donor
     const donor = await User.findByPk(userId);
     if (!donor) return res.status(404).json({ message: 'Donor not found.' });
 
-    // Find material
     const material = await Material.findByPk(materialId, {
       include: [{ model: User, as: 'user' }]
     });
     if (!material) return res.status(404).json({ message: 'Material not found.' });
 
-    // Find the latest relevant material request
     const materialRequest = await MaterialRequest.findOne({
       where: { materialId },
       include: [{ model: User, as: 'requester' }]
     });
     if (!materialRequest) return res.status(404).json({ message: 'Material request not found.' });
 
-    // STK Push Simulation
+    //  Check if bonus already paid
+    if (materialRequest.paid) {
+      return res.status(400).json({ message: 'Bonus has already been paid for this request.' });
+    }
+
+    //  Simulate STK Push
     const paymentResult = await mpesaService.initiateSTKPush(donor.phone, amount);
     if (!paymentResult.success) {
       return res.status(400).json({ message: 'M-Pesa STK Push failed.' });
     }
 
-    // Record Payment
+    // Record Payment and mark request as paid
     await BonusPayment.create({
       userId,
       materialId,
+      materialRequestId: materialRequest.id, // Link payment to specific request
       type: 'Reward-payment',
       amount,
       method: 'M-Pesa',
       status: 'Completed',
     });
 
-    // Notify Papermill User
+    await MaterialRequest.update(
+  { paid: true },
+  { where: { id: materialRequest.id } }
+);
+
+    // Send Notifications
     await Notification.create({
       userId: materialRequest.requester.id,
       message: `Bonus payment of Ksh ${amount} has been made to ${donor.name} for the recyclable item (${material.category}).`
     });
 
-    // Notify Donor
     await Notification.create({
       userId: donor.id,
       message: `Bonus of Ksh ${amount} has been credited for your materials picked up on ${new Date().toLocaleDateString()}.`
     });
 
-    res.status(200).json({ message: 'STK Push initiated. Notifications sent.' });
+    res.status(200).json({ message: 'STK Push initiated. Bonus marked as paid. Notifications sent.' });
 
   } catch (err) {
     console.error('Error processing bonus payment:', err);
@@ -618,6 +651,30 @@ exports.handleSTKCallback = async (req, res) => {
     res.status(500).json({ message: 'Server error processing callback' });
   }
 };
+
+exports.getEcoPayRequests = async (req, res) => {
+  try {
+    const requests = await MaterialRequest.findAll({
+      where: {
+        requesterId: req.user.userId,
+        status: 'Delivered'
+      },
+      include: [
+        {
+          model: Material,
+          as: 'material',
+          include: [{ model: User, as: 'user' }]
+        }
+      ]
+    });
+
+    res.json({ requests });
+  } catch (err) {
+    console.error('Error fetching EcoPay requests:', err);
+    res.status(500).json({ message: 'Failed to fetch EcoPay requests' });
+  }
+};
+
 
 //ussd handler
 
@@ -736,3 +793,220 @@ exports.handleUSSD = async (req, res) => {
   res.set('Content-Type', 'text/plain');
   return res.send(response);
 };
+
+exports.getBonusSum = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const sum = await BonusPayment.sum('amount', {
+      where: { userId, type: 'Reward-payment' }
+    });
+
+    res.status(200).json({ sum: sum || 0 });
+  } catch (error) {
+    console.error('Bonus sum fetch error:', error);
+    res.status(500).json({ message: 'Server error while fetching bonus sum' });
+  }
+};
+
+
+exports.getMyListings = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Fetch all user's listings with optional associated requests
+    const listings = await Material.findAll({
+      where: { userId },
+      include: [
+        {
+          model: MaterialRequest,
+          as: 'requests',
+          required: false
+        }
+      ]
+    });
+
+    // Map to attach status based on latest request (if any)
+    const listingsWithStatus = listings.map(item => {
+      const latestRequest = item.requests?.[0]; // Assuming one request max due to your logic
+      return {
+        id: item.id,
+        title: item.title,
+        category: item.category,
+        type: item.type,
+        status: latestRequest ? latestRequest.status : 'Unknown'
+      };
+    });
+
+    res.status(200).json({ listings: listingsWithStatus });
+  } catch (error) {
+    console.error('Fetching listings error:', error);
+    res.status(500).json({ message: 'Server error while fetching listings' });
+  }
+};
+
+exports.deleteListing = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const itemId = req.params.id;
+
+    const item = await Material.findOne({ where: { id: itemId, userId } });
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found or unauthorized' });
+    }
+
+    const requests = await MaterialRequest.findAll({
+      where: { materialId: itemId }
+    });
+
+    if (requests.length > 0) {
+      const undelivered = requests.some(req => req.status !== 'Delivered');
+      if (undelivered) {
+        return res.status(400).json({ message: 'Item cannot be deleted. It has pending or active requests.' });
+      }
+
+      const requestIds = requests.map(r => r.id);
+
+      // Delete dependent schedules first
+      await Schedule.destroy({ where: { requestId: requestIds } });
+
+      // Delete material requests next
+      await MaterialRequest.destroy({ where: { materialId: itemId } });
+    }
+
+    await item.destroy();
+    return res.status(200).json({ message: 'Item and related records deleted successfully' });
+
+  } catch (error) {
+    console.error('Delete listing error:', error);
+    res.status(500).json({ message: 'Server error while deleting item' });
+  }
+};
+
+
+
+exports.getActivitySummary = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const bookDeliveries = await MaterialRequest.findAll({
+      where: { status: 'Delivered' },
+      include: [
+        {
+          model: Material,
+          as: 'material',
+          where: { type: 'book', userId },
+          required: true
+        }
+      ]
+    });
+
+    const recyclableReceipts = await MaterialRequest.findAll({
+      where: { status: 'Delivered', requesterId: userId },
+      include: [
+        {
+          model: Material,
+          as: 'material',
+          where: { type: 'recyclable' },
+          required: true
+        }
+      ]
+    });
+
+    const summary = [
+      ...bookDeliveries.map(r => ({
+        type: 'book',
+        title: r.material.title,
+        deliveredAt: r.updatedAt
+      })),
+      ...recyclableReceipts.map(r => ({
+        type: 'recyclable',
+        category: r.material.category,
+        receivedAt: r.updatedAt
+      }))
+    ];
+
+    res.status(200).json({ summary });
+  } catch (error) {
+    console.error('Summary fetch error:', error);
+    res.status(500).json({ message: 'Server error while fetching summary' });
+  }
+};
+
+//reports
+
+
+exports.generatePaperMillReport = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Fetch all recyclable deliveries marked as 'Delivered' for this paper mill
+    const requests = await MaterialRequest.findAll({
+      where: {
+        requesterId: userId,
+        status: 'Delivered'
+      },
+      include: [
+        { model: Material, as: 'material', where: { type: 'recyclable' } }
+      ],
+    });
+
+    // Fetch all relevant bonus payments for these materials
+    const materialIds = requests.map(r => r.materialId);
+
+    const bonuses = await BonusPayment.findAll({
+      where: { materialId: materialIds },
+    });
+
+    const bonusMap = {};
+    bonuses.forEach(b => {
+      bonusMap[b.materialId] = b.amount;
+    });
+
+    // Prepare CSV rows
+    const reportData = requests.map(r => ({
+      'Material': r.material.category,
+      'Copies Received': r.material.copies,
+      'Delivery Date': new Date(r.updatedAt).toLocaleDateString(),
+      'Bonus Paid (Ksh)': bonusMap[r.materialId] || 0
+    }));
+
+    const fields = ['Material', 'Copies Received', 'Delivery Date', 'Bonus Paid (Ksh)'];
+    const json2csv = new Parser({ fields });
+    const csv = json2csv.parse(reportData);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('PaperMill_Report.csv');
+    return res.send(csv);
+
+  } catch (err) {
+    console.error('Error generating report:', err);
+    return res.status(500).json({ message: 'Failed to generate report' });
+  }
+};
+
+// delete notification
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notificationId = req.params.id;
+
+    const notification = await Notification.findOne({
+      where: { id: notificationId, userId }
+    });
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found or unauthorized' });
+    }
+
+    await notification.destroy();
+
+    res.status(200).json({ message: 'Notification deleted successfully' });
+    
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ message: 'Server error while deleting notification' });
+  }
+};
+

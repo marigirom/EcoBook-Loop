@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 import { api } from '../services/api';
 import Navbar from "../components/ui/Navbar";
+
 import '../App.css';
 import '../ecopay.css';
-import axios from 'axios';
 
 export default function PaperMill() {
+
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reportUrl, setReportUrl] = useState('');
   const [activeTab, setActiveTab] = useState('recycle');
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
+  // Fetch recyclable requests
   const fetchRequests = async () => {
     try {
       const res = await api.get('http://localhost:5000/inventory/OutgoingRequest');
@@ -31,24 +34,16 @@ export default function PaperMill() {
     }
   };
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    if (tab === 'donate') {
-      navigate('/dashboard');
-    } else if (tab === 'recycle') {
-      navigate('/papermill');
-    } else if (tab === 'activity') {
-      navigate('/dashboard');
-    }
-  };
-
+  // Schedule pickup for recyclable material
   const schedulePickup = async (requestId) => {
     const date = prompt('Enter pickup date (YYYY-MM-DD):');
     if (!date) return;
+
     const pickupLocation = prompt('Enter pickup location:');
     if (!pickupLocation) return;
+
     try {
-      await api.post(`http://localhost:5000/schedule/newSchedule`, {
+      await api.post('http://localhost:5000/schedule/newSchedule', {
         requestId,
         scheduledDate: date,
         pickupLocation
@@ -60,26 +55,26 @@ export default function PaperMill() {
     }
   };
 
-  // Papermill marks item as received, both sides' status updates, donor notified
+  // Mark item as received, triggers donor notification
   const submitMarkRecyclableReceived = async (reqId) => {
-  try {
-    await axios.patch('http://localhost:5000/notifications/requestStatus', {
-      requestId: reqId,
-      status: 'Delivered'
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      await axios.patch('http://localhost:5000/notifications/requestStatus', {
+        requestId: reqId,
+        status: 'Delivered'
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    await fetchRequests();
-    alert('Item marked as received. Proceeding to bonus payment.');
-    window.location.href = '/ecopay';
-  } catch (err) {
-    console.error('Error marking item as received:', err);
-    alert('Failed to mark as received.');
-  }
-};
+      await fetchRequests();
+      alert('Item marked as received. Proceeding to bonus payment.');
+      window.location.href = '/ecopay';
+    } catch (err) {
+      console.error('Error marking item as received:', err);
+      alert('Failed to mark as received.');
+    }
+  };
 
-//pending, the route + logic(backend)
+  // Download activity report
   const downloadReport = async () => {
     try {
       const res = await api.get('http://localhost:5000/inventory/materialrequests/papermill/report', { responseType: 'blob' });
@@ -90,24 +85,28 @@ export default function PaperMill() {
     }
   };
 
-  const handleNotificationsClick = () => {
-    navigate('/notifications');
+  // Navigation Handlers
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'donate') navigate('/dashboard');
+    if (tab === 'recycle') navigate('/papermill');
+    if (tab === 'activity') navigate('/dashboard');
   };
 
-  const handleBonusClick = () => {
-    navigate('/ecopay');
-  };
-
+  const handleNotificationsClick = () => navigate('/notifications');
+  const handleBonusClick = () => navigate('/ecopay');
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
+  // Loading & Error States
   if (loading) return <p className="notif-loading">Loading requests...</p>;
   if (error) return <p className="notif-error">{error}</p>;
 
   return (
-    <div className="papermill-wrapper">
+    <div className="layout-wrapper">
+
       <Navbar
         activeTab={activeTab}
         setActiveTab={handleTabChange}
@@ -118,6 +117,7 @@ export default function PaperMill() {
 
       <h2 className="papermill-header">Paper Mill Logistics</h2>
 
+      {/* Request Cards */}
       <div className="card-section">
         {requests.length === 0 ? (
           <p className="notif-empty">No recyclable requests found.</p>
@@ -162,15 +162,23 @@ export default function PaperMill() {
         )}
       </div>
 
+      {/* Report Download Section */}
       <div className="custom-card report-card">
         <h3>Download Activity Report</h3>
         <button className="custom-btn" onClick={downloadReport}>Generate Report</button>
+
         {reportUrl && (
-          <a href={reportUrl} download="activity_report.csv" className="custom-btn" style={{ marginLeft: '1rem' }}>
+          <a
+            href={reportUrl}
+            download="activity_report.csv"
+            className="custom-btn"
+            style={{ marginLeft: '1rem' }}
+          >
             Click to Download
           </a>
         )}
       </div>
+      
     </div>
   );
 }

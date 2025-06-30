@@ -1,17 +1,43 @@
-/* layout_styles.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(90deg, #00b4db, #38ef7d); /* blue-green gradient */
+  background: linear-gradient(90deg, #00b4db, #38ef7d);
   color: #ffffff;
 }
 
+ul {
+  padding-left: 1rem;
+}
+
+ul li {
+  margin-bottom: 0.5rem;
+}
+
+input, select {
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+input:focus, select:focus {
+  border-color: #1fbf6b;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(31, 191, 107, 0.25);
+}
 
 .layout-wrapper {
-  padding: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .custom-navbar {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -20,41 +46,47 @@ body {
   padding: 12px 24px;
   border-radius: 10px;
   margin-bottom: 24px;
-  
+  position: relative;
+  flex-wrap: wrap;
 }
 
-/* Left section: logo + tabs */
+/* Left */
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.logo {
+.logo-section {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.logo-section img {
+  height: 80px;
+  width: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+}
+
+.logo-text {
   font-weight: bold;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   color: #ffffff;
-  margin-right: 16px;
 }
 
 .nav-tabs {
   display: flex;
+  gap: 8px;
 }
 
-.nav-tabs button {
-  margin-right: 8px;
-}
-
-/* Right section: actions */
+/* Right */
 .nav-right {
   display: flex;
   align-items: center;
-}
-
-.nav-right button,
-.icon-button {
-  margin-left: 8px;
-  color: white;
+  gap: 8px;
 }
 
 .icon-button {
@@ -62,15 +94,52 @@ body {
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  color: white;
+  position: relative;
 }
 
 .icon-button:hover {
   color: #a0e8af;
 }
 
-/* Avatar and dropdown */
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: red;
+  color: white;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 50%;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bonus-container {
+  position: relative;
+  display: inline-block;
+}
+
+.bonus-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  color: black;
+  border: 1px solid #ddd;
+  padding: 10px;
+  min-width: 150px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
 .avatar-container {
   position: relative;
 }
@@ -92,17 +161,52 @@ body {
   min-width: 160px;
 }
 
-.avatar-dropdown-item {
-  padding: 6px 8px;
+.avatar-dropdown p {
+  margin: 6px 0;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
 }
 
-.avatar-dropdown-item:hover {
+.avatar-dropdown p:hover {
   background-color: #f0f0f0;
+  border-radius: 4px;
+  padding: 4px;
 }
 
+.nav-right .logout-button {
+  background: linear-gradient(to right, #ffdd00, #ff914d);
+  color: black;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.nav-right .logout-button:hover {
+  background-color: darkorange;
+}
+
+/* Hamburger Menu */
+.menu-icon {
+  display: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: white;
+}
+
+.collapsed-menu {
+  position: absolute;
+  top: 100%;
+  right: 24px;
+  background: #0f2c4c;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  gap: 8px;
+}
 
 .section-title {
   font-size: 1.25rem;
@@ -112,15 +216,6 @@ body {
   color: #102841;
 }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #1fbf6b;
-  background-color: #ccc;
-}
-
 .grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -128,9 +223,6 @@ body {
   padding: 1rem 0;
 }
 
-
-
-/* Cards */
 .custom-card {
   background: linear-gradient(135deg, #2e005a, #3a0b78);
   border-radius: 20px;
@@ -153,13 +245,6 @@ body {
   color: #ffffff;
 }
 
-
-.custom-card-body {
-  padding: 1.5rem;
-}
-
-
-/* Buttons */
 .custom-btn {
   border: none;
   padding: 0.5rem 1.2rem;
@@ -177,9 +262,6 @@ body {
   background: linear-gradient(to right, #ffc107, #ff6a00);
 }
 
-
-
-
 .modal-content {
   border-radius: 8px;
   border: none;
@@ -190,29 +272,6 @@ body {
   color: #102841;
 }
 
-input, select {
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-input:focus, select:focus {
-  border-color: #1fbf6b;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(31, 191, 107, 0.25);
-}
-
-ul {
-  padding-left: 1rem;
-}
-
-ul li {
-  margin-bottom: 0.5rem;
-}
-
-
-/* Wrapper */
 .login-wrapper {
   height: 100vh;
   background: linear-gradient(90deg, #00b4db, #38ef7d);
@@ -221,7 +280,6 @@ ul li {
   font-family: 'Poppins', sans-serif;
 }
 
-/* Navbar */
 .login-navbar {
   display: flex;
   justify-content: space-between;
@@ -229,11 +287,6 @@ ul li {
   background-color: #0f2c4c;
   color: white;
   padding: 1rem 2rem;
-}
-
-.login-logo {
-  font-size: 1.4rem;
-  font-weight: bold;
 }
 
 .signup-nav-link {
@@ -249,7 +302,6 @@ ul li {
   background: linear-gradient(to right, #ffc107, #ff6a00);
 }
 
-/* Layout Grid */
 .login-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -266,7 +318,14 @@ ul li {
   justify-content: center;
 }
 
-/* Login Card */
+.login-pointers {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-top: 1rem;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
 .login-container {
   background-color: white;
   border-radius: 12px;
@@ -329,8 +388,16 @@ ul li {
   text-decoration: underline;
 }
 
-/* Mobile */
 @media (max-width: 768px) {
+  .nav-tabs,
+  .nav-right {
+    display: none;
+  }
+
+  .menu-icon {
+    display: block;
+  }
+
   .login-grid {
     grid-template-columns: 1fr;
     text-align: center;
@@ -342,17 +409,41 @@ ul li {
 }
 
 
+/* ================= Global Layout ================= */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-container > :first-child {
+  flex: 1;
+}
+
+footer {
+  background: #0f2c4c;
+  color: white;
+  text-align: center;
+  padding: 12px;
+}
+
+/* ================= Register Page ================= */
 .register-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh; /* full screen height */
+  height: 100vh;
   background: linear-gradient(135deg, #00b4db, #38ef7d);
-  font-family: 'Poppins', sans-serif;
 }
 
 .register-card {
-  background-color: #ffffff;
+  background-color: #fff;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
@@ -398,11 +489,9 @@ ul li {
   background: linear-gradient(to right, #ffc107, #ff6a00);
 }
 
-
-/* Additional styles for My Activity tab */
-
+/* ================= Notification Panel (My Activity) ================= */
 .notification-panel {
-  background-color: #ffffff;
+  background-color: #fff;
   color: #102841;
   border-radius: 10px;
   padding: 1rem;
@@ -434,7 +523,7 @@ ul li {
   border-bottom: none;
 }
 
-/* Card text links (Donor / Mill options) */
+/* ================= Card Links ================= */
 .card-link {
   margin: 0.25rem 0;
   color: #a0e8af;
@@ -444,17 +533,17 @@ ul li {
 }
 
 .card-link:hover {
-  color: #ffffff;
+  color: #fff;
 }
 
-/*notifications-page*/
+/* ================= Notifications Page ================= */
 .notif-wrapper {
   max-width: 800px;
   margin: 2rem auto;
   padding: 2rem;
-  font-family: 'Segoe UI', sans-serif;
   background-color: #f9f9f9;
   border-radius: 10px;
+  font-family: 'Segoe UI', sans-serif;
 }
 
 .notif-header {
@@ -508,6 +597,12 @@ ul li {
   background-color: #388e3c;
 }
 
+.notif-btn.delete {
+  background-color: #ff4d4d;
+  color: white;
+  margin-left: 8px;
+}
+
 .notif-loading,
 .notif-error,
 .notif-empty {
@@ -516,13 +611,12 @@ ul li {
   color: #666;
 }
 
-/*papermill section*/
+/* ================= Papermill Section ================= */
 .papermill-wrapper {
   padding: 2rem;
-  background: linear-gradient(90deg, #2e005a, #3a0b78);
+  background: linear-gradient(90deg, #00b4db, #38ef7d);
   min-height: 100vh;
   color: #fff;
-  font-family: 'Poppins', sans-serif;
 }
 
 .papermill-header {
@@ -591,6 +685,7 @@ ul li {
   background: linear-gradient(to right, #ffc107, #ff6a00);
 }
 
+/* ================= Report & Payment Modal ================= */
 .report-card {
   background: linear-gradient(135deg, #1b1b2f, #3a0b78);
   text-align: center;
@@ -606,7 +701,6 @@ ul li {
   width: 100%;
   height: 100%;
   background: transparent;
-  /*backdrop-filter: blur(2px);*/
   display: flex;
   justify-content: center;
   align-items: center;
@@ -665,10 +759,3 @@ ul li {
 .payment-modal .cancel-btn:hover {
   background: #999;
 }
-
-
-
-
-
-
-
