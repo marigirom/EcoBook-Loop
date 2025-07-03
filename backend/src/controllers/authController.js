@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const { User, Material, MaterialRequest, Notification, Schedule, BonusPayment } = require('../models');
 const mpesaService = require('../services/mpesaService');
 const transporter = require('../utils/mailer');
-//const MaterialRequest = require('../models/MaterialRequest');
 const { Op } = require('sequelize');
 const { Parser } = require('json2csv');  
 const { request } = require('express');
@@ -15,12 +14,12 @@ exports.register = async (req, res) => {
   const { name, email, phone, password } = req.body;
 
 try {
-  //added this for existsing users
+  //for existsing users
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser) {
     return res.status(400).json({message: 'User already exists'});
   }
-  //TO HASH THE PASSWORD
+  //HASH THE PASSWORD
   const passwordHash = await bcrypt.hash(password, 10);
   //save new user to the database user table
   await User.create({ name, email, phone, passwordHash });
@@ -161,7 +160,6 @@ exports.getProfile = async (req, res) => {
 
 //Listin materials
 
-//const { Material } = require('../models');
 exports.createMaterial = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -189,7 +187,7 @@ exports.createMaterial = async (req, res) => {
       title: type === 'book' ? title : null,
       condition: type === 'book' ? condition : null,
       category: type === 'recyclable' ? category : null,
-      copies: type === 'recyclable' ? copies : null,   // ✅ Ensure copies are saved for recyclables
+      copies: type === 'recyclable' ? copies : null,   // copies are saved for recyclables
       location,
       available: true
     });
@@ -206,11 +204,8 @@ exports.createMaterial = async (req, res) => {
 };
 
 
-//const { Material, User } = require('../models');
-
 exports.getMaterials = async (req, res) => {
   try {
-    //const  userId = req.user.userId;
 
     const materials = await Material.findAll({
       where: { userId: req.user.userId },
@@ -243,7 +238,7 @@ exports.createRequest = async (req, res) => {
       return res.status(404).json({ message: 'Material not found.' });
     }
 
-    // For books, ignore material.available — use request existence to determine availability
+    // For books; request existence to determine availability
     if (type === 'book') {
       const existingRequest = await MaterialRequest.findOne({
         where: {
@@ -257,7 +252,7 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    // For recyclables, use both available flag and request check
+    // For recyclables; both available flag and request check
     if (type === 'recyclable') {
       if (!material.available) {
         return res.status(400).json({ error: 'This item is currently unavailable.' });
@@ -278,6 +273,13 @@ exports.createRequest = async (req, res) => {
       await material.save();
     }
 
+    // Fetch requester details
+    const requester = await User.findByPk(requesterId);
+
+    if (!requester) {
+      return res.status(404).json({ message: 'Requester not found.' });
+    }
+
     // Create new request
     const newRequest = await MaterialRequest.create({
       materialId,
@@ -286,10 +288,10 @@ exports.createRequest = async (req, res) => {
       type,
     });
 
-    // Notify donor
+    // Notify donor with requester's name and location
     await Notification.create({
       userId: material.userId,
-      message: `Someone has requested your ${material.type} "${material.title || material.category}".`,
+      message: `${requester.name} from ${material.location} has requested your ${material.type} "${material.title || material.category}".`,
     });
 
     res.status(201).json({ message: 'Request created successfully.', request: newRequest });
@@ -299,6 +301,7 @@ exports.createRequest = async (req, res) => {
     res.status(500).json({ message: 'Server error creating request.' });
   }
 };
+
 
 
 // View materials listed by other users (not self)
@@ -342,7 +345,7 @@ exports.getMyBookRequests = async (req, res) => {
 };
 
 
-// Get requests for a user's listed materials//**to check❌❌ */
+// Get requests for a user's listed materials /
 exports.getRequestsForMyMaterials = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -350,15 +353,18 @@ exports.getRequestsForMyMaterials = async (req, res) => {
     const requests = await MaterialRequest.findAll({
       include: [
         { model: Material, as: 'material', where: { userId } },
-        { model: User, as: 'requester', attributes: ['id', 'name'] },
+        { model: User, as: 'requester', attributes: ['id', 'name', 'phone', 'email'] },
       ],
+      
     });
+
     res.status(200).json({requests});
   } catch (error) {
     console.error('Error getting requests:', error);
     res.status(500).json({ message: 'Server error fetching requests.' });
   }
 };
+
 
 
 //get the papermill's recycling requests
@@ -380,6 +386,7 @@ exports.getMyRecyclableRequests = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching recyclable requests.' });
   }
 };
+
 //delivered recyclables
 
 exports.getDeliveredRecyclableRequests = async (req, res) => {
@@ -406,7 +413,7 @@ exports.getDeliveredRecyclableRequests = async (req, res) => {
 };
 
 
-// Update request status (e.g., Deliver or Mark as Received)
+// Update request status examples; Deliver or Mark as Received
 exports.updateRequestStatus = async (req, res) => {
   try {
     const { requestId, status } = req.body;
@@ -505,7 +512,7 @@ exports.markAsRead = async (req, res) => {
     res.status(500).json({ message: 'Error updating notification' });
   }
 };
-
+//scheduling for pickups done by papermill user
 exports.createSchedule = async (req, res) => {
   try {
     const { requestId, scheduledDate, pickupLocation } = req.body;
@@ -533,7 +540,7 @@ exports.createSchedule = async (req, res) => {
     // Notify donor
     await Notification.create({
       userId: request.material.userId,
-      message: `Pickup scheduled for your recyclable item "${request.material.title}" on ${scheduledDate}.`,
+      message: `Pickup scheduled for your recyclable item "${request.material.title || request.material.category}" on ${scheduledDate}.`,
     });
 
     res.status(201).json({ schedule });
@@ -543,8 +550,7 @@ exports.createSchedule = async (req, res) => {
   }
 };
 
-//bonus
-
+//bonus payment to  the donor  listed the item
 
 exports.processBonusPayment = async (req, res) => {
   const { userId, materialId, amount } = req.body;
@@ -678,8 +684,6 @@ exports.getEcoPayRequests = async (req, res) => {
 
 //ussd handler
 
-//const { User, Material, MaterialRequest, Notification } = require('../models');
-
 exports.handleUSSD = async (req, res) => {
   const { text, phoneNumber } = req.body;
   const inputs = text.split('*');
@@ -716,7 +720,7 @@ exports.handleUSSD = async (req, res) => {
       if (inputs.length === 1) {
         response = 'CON Enter book title:';
       } else if (inputs.length === 2) {
-        response = 'CON Enter book condition (new, good, fair):';
+        response = 'CON Enter book condition (new, fairly used, old):';
       } else if (inputs.length === 3) {
         let locList = '';
         LOCATIONS.forEach((loc, idx) => {
@@ -809,7 +813,7 @@ exports.getBonusSum = async (req, res) => {
   }
 };
 
-
+// a list of all materials I ever listed
 exports.getMyListings = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -826,9 +830,9 @@ exports.getMyListings = async (req, res) => {
       ]
     });
 
-    // Map to attach status based on latest request (if any)
+    // Map to attach status based on latest request 
     const listingsWithStatus = listings.map(item => {
-      const latestRequest = item.requests?.[0]; // Assuming one request max due to your logic
+      const latestRequest = item.requests?.[0]; // Assuming one request 
       return {
         id: item.id,
         title: item.title,
@@ -845,6 +849,7 @@ exports.getMyListings = async (req, res) => {
   }
 };
 
+//delete an item that' already delivered
 exports.deleteListing = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -867,7 +872,9 @@ exports.deleteListing = async (req, res) => {
 
       const requestIds = requests.map(r => r.id);
 
-      // Delete dependent schedules first
+      /* Delete dependent schedules first
+      sequesntial deletion
+*/
       await Schedule.destroy({ where: { requestId: requestIds } });
 
       // Delete material requests next
@@ -884,7 +891,7 @@ exports.deleteListing = async (req, res) => {
 };
 
 
-
+//A summary ofall the user's activities
 exports.getActivitySummary = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -933,8 +940,7 @@ exports.getActivitySummary = async (req, res) => {
   }
 };
 
-//reports
-
+//reports for the papermill users to generate and download
 
 exports.generatePaperMillReport = async (req, res) => {
   try {
@@ -985,7 +991,7 @@ exports.generatePaperMillReport = async (req, res) => {
   }
 };
 
-// delete notification
+// delete a notification once read
 
 exports.deleteNotification = async (req, res) => {
   try {

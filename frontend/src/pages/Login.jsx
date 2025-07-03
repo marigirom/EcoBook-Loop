@@ -45,8 +45,10 @@ export default function Login() {
       {/* Main Grid */}
       <div className="login-grid">
 
-        {/* Left Panel - Info */}
+        {/* Left Panel */}
         <div className="login-info-panel">
+          <div className="split-image-circle"></div>
+
           <h1 className="login-title">EcoBook Loop</h1>
           <ul className="login-pointers">
             <li>Donate books you no longer need</li>
@@ -57,7 +59,7 @@ export default function Login() {
           </ul>
         </div>
 
-        {/* Right Panel - Login Form */}
+        {/* Right Panel */}
         <div className="login-container">
           <h2 className="login-subtitle">Login</h2>
 

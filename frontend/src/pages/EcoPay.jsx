@@ -13,7 +13,7 @@ export default function EcoPay() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('recycle');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState('100');
+  const [paymentAmount, setPaymentAmount] = useState('50');
   const [showForm, setShowForm] = useState(false);
 
   const navigate = useNavigate();
@@ -56,13 +56,13 @@ export default function EcoPay() {
     return;
   }
     setSelectedRequest(req);
-    setPaymentAmount('100');
+    setPaymentAmount('50');
     setShowForm(true);
   };
 
   const closeBonusForm = () => {
     setSelectedRequest(null);
-    setPaymentAmount('100');
+    setPaymentAmount('50');
     setShowForm(false);
   };
 
@@ -120,7 +120,7 @@ export default function EcoPay() {
                 <p>Listed by: {req.material?.user?.name}</p>
                 <p>Phone: {req.material?.user?.phone}</p>
                 <p>Location: {req.material?.location}</p>
-                <p>Bonus Amount: KES 100</p>
+                <p>Bonus Amount: KES 50</p>
               </div>
               {req.paid ? (
                 <button

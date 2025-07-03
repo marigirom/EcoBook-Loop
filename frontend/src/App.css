@@ -316,6 +316,39 @@ input:focus, select:focus {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+}
+
+/* Split Image Circle */
+.split-image-circle {
+  width: 450px;
+  height: 350px;
+  border-radius: 50%;
+  position: relative;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.split-image-circle::before,
+.split-image-circle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
+.split-image-circle::before {
+  left: 0;
+  background-image: url('C:\Users\Romars\eco-book-loop\frontend\public\conceptual-image-help-care-recycling-green-triangular-recycle-symbol-transparent-background_955584-52738.jpg');
+}
+
+.split-image-circle::after {
+  right: 0;
+  background-image: url('C:\Users\Romars\eco-book-loop\frontend\public\istockphoto-1680305118-612x612.jpg');
 }
 
 .login-pointers {
@@ -409,6 +442,7 @@ input:focus, select:focus {
 }
 
 
+
 /* ================= Global Layout ================= */
 body, html {
   margin: 0;
@@ -489,7 +523,7 @@ footer {
   background: linear-gradient(to right, #ffc107, #ff6a00);
 }
 
-/* ================= Notification Panel (My Activity) ================= */
+/* Notification Panel (My Activity)  */
 .notification-panel {
   background-color: #fff;
   color: #102841;
@@ -523,7 +557,7 @@ footer {
   border-bottom: none;
 }
 
-/* ================= Card Links ================= */
+/* Card Links  */
 .card-link {
   margin: 0.25rem 0;
   color: #a0e8af;
@@ -536,7 +570,7 @@ footer {
   color: #fff;
 }
 
-/* ================= Notifications Page ================= */
+/*  Notifications Page*/
 .notif-wrapper {
   max-width: 800px;
   margin: 2rem auto;
@@ -611,7 +645,7 @@ footer {
   color: #666;
 }
 
-/* ================= Papermill Section ================= */
+/*Papermill Section*/
 .papermill-wrapper {
   padding: 2rem;
   background: linear-gradient(90deg, #00b4db, #38ef7d);
@@ -685,7 +719,7 @@ footer {
   background: linear-gradient(to right, #ffc107, #ff6a00);
 }
 
-/* ================= Report & Payment Modal ================= */
+/* Report & Payment Modal  */
 .report-card {
   background: linear-gradient(135deg, #1b1b2f, #3a0b78);
   text-align: center;

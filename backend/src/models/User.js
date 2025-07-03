@@ -31,7 +31,6 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'users',
   });
 
-  // Define association (optional, only if Material model is loaded)
   User.associate = (models) => {
     User.hasMany(models.Material, { foreignKey: 'userId', as: 'materials' });
   };

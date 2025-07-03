@@ -134,16 +134,16 @@ const ModalRenderer = ({
         <ul>
           {requests.map((req) => (
             <li key={req.id}>
-              <b>{req.title}</b> ({req.type}) - {req.requestedBy} - Status: {req.status}
+              <b>{req.title}</b> ({req.type}) - {req.requester?.name || 'unknown'} - Status: {req.status}
               
-              {/* Existing Deliver button for books */}
+              {/*Deliver button for books*/}
               {req.type === 'book' && req.status === 'Pending' && (
                 <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onDeliverRequest(req.id)}>
                   Deliver
                 </Button>
               )}
 
-              {/* New Picked Up button for recyclables */}
+              {/*Picked Up button for recyclables*/}
               {req.type === 'recyclable' && req.status === 'Initiated-delivery' && (
                 <Button size="sm" style={{ marginLeft: 8 }} onClick={() => onItemPickedUp(req.id)}>
                   Item Picked Up

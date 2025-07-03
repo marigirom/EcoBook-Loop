@@ -17,7 +17,7 @@ const Layout = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
 
-  // UI State
+  // main state for UI
   const [activeTab, setActiveTab] = useState('donate');
   const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
   const [showBonusDropdown, setShowBonusDropdown] = useState(false);
@@ -71,7 +71,7 @@ const Layout = () => {
   const [listedBooks, setListedBooks] = useState([]);
   const [listedItems, setListedItems] = useState([]);
 
-  // Dropdown & Modal Controls
+  // Dropdowns and modal controls
   const toggleAvatarDropdown = () => setShowAvatarDropdown(!showAvatarDropdown);
   const toggleBonusDropdown = () => setShowBonusDropdown(!showBonusDropdown);
   const onNotificationsClick = () => navigate('/Notifications');
@@ -90,7 +90,7 @@ const Layout = () => {
     setShowModal(true);
   };
 
-//FETCH FUNCTIONS
+//Fetching functions-access routes
 
 // Fetch materials listed by the user
 const fetchListedMaterials = useCallback(async () => {
@@ -127,15 +127,18 @@ const fetchRequests = useCallback(async () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const formatted = res.data.requests.map(req => ({
-      id: req.id,
-      title: req.material?.title || 'Untitled',
-      type: req.material?.type || 'Unknown',
-      category: req.material?.category || 'N/A',
-      copies: req.material?.copies ?? 1,
-      status: req.status,
-      requestedBy: req.name || 'Unknown',
-      material: req.material
-    }));
+  id: req.id,
+  title: req.material?.type === 'book' 
+    ? req.material?.title || 'Untitled' 
+    : req.material?.category || 'Uncategorized',
+  type: req.material?.type || 'Unknown',
+  category: req.material?.category || 'Uncategorized',
+  copies: req.material?.copies ?? 1,
+  status: req.status,
+  requester: req.requester?.name || 'Unknown',
+  material: req.material
+}));
+
     setRequests(formatted);
   } catch (err) {
     console.error('Failed to fetch requests:', err);
@@ -194,7 +197,7 @@ const fetchBonusSum = useCallback(async () => {
   }
 }, [token]);
 
-// Fetch user's own listed materials summary
+// Fetch user's own listed materials summary- auser can only view their materials
 const fetchListings = useCallback(async () => {
   try {
     const res = await axios.get('http://localhost:5000/inventory/myListings', {
@@ -205,7 +208,7 @@ const fetchListings = useCallback(async () => {
       type: item.type,
       title: item.title || null,
       category: item.category || null,
-      status: item.status || 'Unknown',
+      status: item.status || 'Not requested yet',
       location: item.location || 'N/A'
     }));
     setListings(listings);
@@ -549,10 +552,10 @@ const deleteListing = async (id) => {
 return (
   <div className="layout-wrapper">
 
-    {/* NAVIGATION BAR */}
+    
     <nav className="custom-navbar">
 
-      {/* Left Side - Logo & Tabs */}
+      {/* NavigationBarLeft Side - EcoBookcLogo ant tabs */}
       <div className="nav-left">
         <div className="logo-section" onClick={() => navigate('/dashboard')}>
           <img src={EBookLogo} alt="EcoBook Logo" />
@@ -572,7 +575,7 @@ return (
         </div>
       </div>
 
-      {/* Right Side - Notifications, Bonus, Avatar, Logout */}
+      {/* NavigationBarRight Side - Notifications, Bonus, Avatar, Logout */}
       <div className="nav-right">
         <button className="icon-button notif-icon" onClick={onNotificationsClick}>
           <FaBell />
@@ -605,7 +608,7 @@ return (
         <button className="logout-button" onClick={logout}>Logout</button>
       </div>
 
-      {/* Mobile Menu Icon */}
+      {/*Menu Icon */}
       <FaBars className="menu-icon" onClick={() => setMenuOpen(!menuOpen)} />
 
       {/* Collapsed Menu for Mobile */}
@@ -621,7 +624,7 @@ return (
       )}
     </nav>
 
-    {/* DONATE/RECEIVE TAB */}
+    {/* Donate&Receive Tab- Donors list ite,s and one can search for a book*/}
     {activeTab === 'donate' && (
       <>
         <h4 className="section-title">Are you donating?</h4>
@@ -659,7 +662,7 @@ return (
       </>
     )}
 
-    {/* FIND RECYCLABLES TAB */}
+    {/* Find recyclables tab- to search and request for recycling items*/}
     {activeTab === 'recycle' && (
       <>
         <h4 className="section-title">Find materials to recycle</h4>
@@ -688,7 +691,7 @@ return (
       </>
     )}
 
-    {/* MY ACTIVITY TAB */}
+    {/*My activity tab- allow user to view past activities*/}
     {activeTab === 'activity' && (
       <>
         <h4 className="section-title">My Activity</h4>
@@ -707,7 +710,7 @@ return (
           </Card>
         </div>
 
-        <div className="notification-panel">
+        {/*<div className="notification-panel">
           <h5>Notifications</h5>
           <ul className="notification-list">
             {notifications.length > 0 ? (
@@ -718,7 +721,7 @@ return (
               <li className="notification-item">No new notifications</li>
             )}
           </ul>
-        </div>
+          </div>*/}
       </>
     )}
 
@@ -731,7 +734,7 @@ return (
           modalType={modalContent}
           closeModal={closeModal}
 
-          // Location & Listings
+    // Location and materialistings
           locations={locations}
           listedBooks={booksWithStatus}
           listedItems={listedItems}
@@ -739,11 +742,11 @@ return (
           fetchListings={fetchListings}
           deleteListing={deleteListing}
 
-          // Available Materials
+          // Availablematerials
           availableBooks={availableBooks}
           availableItems={availableItems}
 
-          // Requests & Results
+        // Requests, searchResults
           requests={requests}
           requestedBooks={requestedBooks}
           searchResults={searchResults}
@@ -751,13 +754,13 @@ return (
           selectedMaterials={selectedMaterials}
           requestedMaterials={requestedMaterials}
 
-          // Summary & Bonus
+    // Summary of activities, Bonus
           summaryData={summaryData}
           fetchSummary={fetchSummary}
           bonusSum={bonusSum}
           fetchBonusSum={fetchBonusSum}
 
-          // Form States
+   // States for forms
           formState={
             modalContent === 'listBook' ? bookForm :
             modalContent === 'listItem' ? itemForm :
@@ -771,7 +774,7 @@ return (
             setMaterialSearchForm
           }
 
-          // Handlers
+  // modalhandlers; handling individual modals
           onSubmit={
             modalContent === 'listBook' ? submitListBook :
             modalContent === 'listItem' ? submitListItem :

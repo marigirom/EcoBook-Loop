@@ -85,11 +85,11 @@ export default function PaperMill() {
     }
   };
 
-  // Navigation Handlers
+  // Navigation Handlers for tab changing
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === 'donate') navigate('/dashboard');
-    if (tab === 'recycle') navigate('/papermill');
+    if (tab === 'recycle') navigate('/dashboard');
     if (tab === 'activity') navigate('/dashboard');
   };
 
@@ -100,7 +100,6 @@ export default function PaperMill() {
     navigate('/login');
   };
 
-  // Loading & Error States
   if (loading) return <p className="notif-loading">Loading requests...</p>;
   if (error) return <p className="notif-error">{error}</p>;
 
@@ -115,9 +114,9 @@ export default function PaperMill() {
         logout={handleLogout}
       />
 
-      <h2 className="papermill-header">Paper Mill Logistics</h2>
+      <h2 className="papermill-header">Paper Mill</h2>
 
-      {/* Request Cards */}
+      {/* Request Cards-showing requests made */}
       <div className="card-section">
         {requests.length === 0 ? (
           <p className="notif-empty">No recyclable requests found.</p>

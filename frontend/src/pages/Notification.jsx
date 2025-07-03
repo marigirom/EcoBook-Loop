@@ -54,8 +54,8 @@ export default function Notifications() {
     setActiveTab(tab);
 
     if (tab === 'donate') navigate('/dashboard');
-    else if (tab === 'recycle') navigate('/papermill');
-    else if (tab === 'activity') navigate('/notifications');
+    else if (tab === 'recycle') navigate('/dashboard');
+    else if (tab === 'activity') navigate('/dashboard');
   };
 
   const handleNotificationsClick = () => navigate('/notifications');
